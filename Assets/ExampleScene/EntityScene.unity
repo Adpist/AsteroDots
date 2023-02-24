@@ -137,7 +137,7 @@ GameObject:
   - component: {fileID: 48669848}
   - component: {fileID: 48669849}
   m_Layer: 0
-  m_Name: Cube
+  m_Name: Player
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -243,6 +243,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   rotationSpeed: 180
   accelerationSpeed: 10
+  bulletSpeed: 15
+  bulletPrefab: {fileID: 839019687271756760, guid: 892b7a73e09960941997fabe681d4fbe, type: 3}
 --- !u!1 &366857084
 GameObject:
   m_ObjectHideFlags: 0

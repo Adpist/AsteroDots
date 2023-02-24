@@ -7,6 +7,9 @@ public class PlayerStatsAuthoring : MonoBehaviour
 {
     public float rotationSpeed = 180f;
     public float accelerationSpeed = 10.0f;
+    public float bulletSpeed = 15.0f;
+    public float bulletLifeTime = 10.0f;
+    public GameObject bulletPrefab;
 
     public class Baker : Baker<PlayerStatsAuthoring>
     {
@@ -15,7 +18,10 @@ public class PlayerStatsAuthoring : MonoBehaviour
             var data = new PlayerStats
             {
                 accelerationSpeed = authoring.accelerationSpeed,
-                rotationSpeed = authoring.rotationSpeed
+                rotationSpeed = authoring.rotationSpeed,
+                bulletSpeed = authoring.bulletSpeed,
+                bulletLifeTime = authoring.bulletLifeTime,
+                bulletPrefab = GetEntity(authoring.bulletPrefab)
             };
             AddComponent(data);
         }
@@ -26,4 +32,7 @@ struct PlayerStats : IComponentData
 {
     public float accelerationSpeed;
     public float rotationSpeed;
+    public float bulletSpeed;
+    public float bulletLifeTime;
+    public Entity bulletPrefab;
 }
