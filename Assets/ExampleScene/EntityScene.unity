@@ -244,8 +244,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   rotationSpeed: 180
   accelerationSpeed: 10
-  bulletSpeed: 15
-  bulletLifeTime: 10
+  bulletSpeed: 25
+  bulletLifeTime: 2
   bulletPrefab: {fileID: 839019687271756760, guid: 892b7a73e09960941997fabe681d4fbe, type: 3}
 --- !u!114 &48669850
 MonoBehaviour:
@@ -625,9 +625,12 @@ MonoBehaviour:
   maxAsteroidSpawnDelay: 20
   minAsteroidSpeed: 2
   maxAsteroidSpeed: 10
+  minUFOSpawnDelay: 15
+  maxUFOSpawnDelay: 30
   initialAsteroidsCount: 5
   safetyRadius: 15
   asteroidPrefab: {fileID: 5216493640928305864, guid: 8e0b9ee1f2b2cb947abb1c0329ed163b, type: 3}
+  ufoPrefab: {fileID: 1065300826835996236, guid: 3f50e2c407622b64c9fec793c36403b5, type: 3}
 --- !u!4 &2036583278
 Transform:
   m_ObjectHideFlags: 0

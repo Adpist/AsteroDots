@@ -10,9 +10,13 @@ public class SpawnManagerAuthoring : MonoBehaviour
     public float minAsteroidSpeed = 2;
     public float maxAsteroidSpeed = 10;
 
+    public float minUFOSpawnDelay = 15;
+    public float maxUFOSpawnDelay = 30;
+
     public int initialAsteroidsCount = 5;
     public float safetyRadius = 15;
     public GameObject asteroidPrefab;
+    public GameObject ufoPrefab;
 
     public class Baker : Baker<SpawnManagerAuthoring>
     {
@@ -24,10 +28,14 @@ public class SpawnManagerAuthoring : MonoBehaviour
                 maxAsteroidSpawnDelay = authoring.maxAsteroidSpawnDelay,
                 minAsteroidSpeed = authoring.minAsteroidSpeed,
                 maxAsteroidSpeed = authoring.maxAsteroidSpeed,
+                minUFOSpawnDelay = authoring.minUFOSpawnDelay,
+                maxUFOSpawnDelay = authoring.maxUFOSpawnDelay,
                 initialAsteroidsCount = authoring.initialAsteroidsCount,
                 sqrSafetyRadius = authoring.safetyRadius * authoring.safetyRadius,
                 nextAsteroidSpawnTick = 0,
+                nextUFOSpawnTick = 0,
                 asteroidPrefab = GetEntity(authoring.asteroidPrefab),
+                ufoPrefab = GetEntity(authoring.ufoPrefab),
                 initialSpawnProcessed = false
             };
             AddComponent(data);
@@ -42,8 +50,12 @@ struct SpawnManagerData : IComponentData
     public float minAsteroidSpeed;
     public float maxAsteroidSpeed;
     public int initialAsteroidsCount;
+    public float minUFOSpawnDelay;
+    public float maxUFOSpawnDelay;
     public float sqrSafetyRadius;
     public double nextAsteroidSpawnTick;
+    public double nextUFOSpawnTick;
     public Entity asteroidPrefab;
+    public Entity ufoPrefab;
     public bool initialSpawnProcessed;
 }

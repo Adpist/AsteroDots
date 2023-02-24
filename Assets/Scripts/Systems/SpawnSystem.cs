@@ -35,19 +35,29 @@ public partial struct SpawnSystem : ISystem
             for (int i = 0; i < spawnData.initialAsteroidsCount; ++i)
             {
                 float speed = UnityEngine.Random.Range(spawnData.minAsteroidSpeed, spawnData.maxAsteroidSpeed);
-                SpawnAsteroid(ref ecb, spawnData.asteroidPrefab, GetAsteroidSpawnPos(spawnData.sqrSafetyRadius), GetAsteroidVelocityDirection(), speed, 8);
+                SpawnAsteroid(ref ecb, spawnData.asteroidPrefab, GetEnnemySpawnPos(Vector3.zero, spawnData.sqrSafetyRadius), GetAsteroidVelocityDirection(), speed, 8);
             }
             spawnData.nextAsteroidSpawnTick = SystemAPI.Time.ElapsedTime + UnityEngine.Random.Range(spawnData.minAsteroidSpawnDelay, spawnData.maxAsteroidSpawnDelay);
             spawnData.initialSpawnProcessed = true;
+            spawnData.nextUFOSpawnTick = SystemAPI.Time.ElapsedTime + UnityEngine.Random.Range(spawnData.minUFOSpawnDelay, spawnData.maxUFOSpawnDelay);
             state.EntityManager.SetComponentData(spawnManager, spawnData);
         }
         else
         {
+            Entity playerEntity = SystemAPI.GetSingletonEntity<PlayerStats>();
+            LocalTransform playerTransform = state.EntityManager.GetComponentData<LocalTransform>(playerEntity);
             if (SystemAPI.Time.ElapsedTime > spawnData.nextAsteroidSpawnTick)
             {
                 float speed = UnityEngine.Random.Range(spawnData.minAsteroidSpeed, spawnData.maxAsteroidSpeed);
-                SpawnAsteroid(ref ecb, spawnData.asteroidPrefab, GetAsteroidSpawnPos(spawnData.sqrSafetyRadius), GetAsteroidVelocityDirection(), speed, 8);
+                SpawnAsteroid(ref ecb, spawnData.asteroidPrefab, GetEnnemySpawnPos(playerTransform.Position, spawnData.sqrSafetyRadius), GetAsteroidVelocityDirection(), speed, 8);
                 spawnData.nextAsteroidSpawnTick = SystemAPI.Time.ElapsedTime + UnityEngine.Random.Range(spawnData.minAsteroidSpawnDelay, spawnData.maxAsteroidSpawnDelay);
+                state.EntityManager.SetComponentData(spawnManager, spawnData);
+            }
+
+            if(SystemAPI.Time.ElapsedTime > spawnData.nextUFOSpawnTick)
+            {
+                SpawnUFO(ref ecb, spawnData.ufoPrefab, GetEnnemySpawnPos(playerTransform.Position, spawnData.sqrSafetyRadius));
+                spawnData.nextUFOSpawnTick = SystemAPI.Time.ElapsedTime + UnityEngine.Random.Range(spawnData.minUFOSpawnDelay, spawnData.maxUFOSpawnDelay);
                 state.EntityManager.SetComponentData(spawnManager, spawnData);
             }
 
@@ -76,6 +86,16 @@ public partial struct SpawnSystem : ISystem
                     state.EntityManager.DestroyEntity(asteroid);
                 }
             }
+
+            NativeArray<Entity> ufos = state.EntityManager.CreateEntityQuery(typeof(UFOData)).ToEntityArray(Allocator.Temp);
+            foreach (Entity ufo in ufos)
+            {
+                UFOData ufoData = state.EntityManager.GetComponentData<UFOData>(ufo);
+                if (ufoData.destroyed)
+                {
+                    state.EntityManager.DestroyEntity(ufo);
+                }
+            }
         }
         ecb.Playback(state.EntityManager);
     }
@@ -90,15 +110,21 @@ public partial struct SpawnSystem : ISystem
         ecb.SetComponent(newAsteroid, new AsteroidStats { destroyed = false, size = asteroidSize });
     }
 
+    private void SpawnUFO(ref EntityCommandBuffer ecb, Entity prefab, Vector3 pos)
+    {
+        Entity newUFO = ecb.Instantiate(prefab);
+        ecb.SetComponent(newUFO, new LocalTransform { Position = pos, Rotation = Quaternion.identity, Scale = 1 });
+    }
+
     [BurstCompile]
-    public Vector3 GetAsteroidSpawnPos(float sqrSafetyRadius)
+    public Vector3 GetEnnemySpawnPos(Vector3 safetyCenter, float sqrSafetyRadius)
     {
         Vector3 spawnPos = Vector3.zero;
         do
         {
             spawnPos.x = UnityEngine.Random.Range(-MovementSystem.HALF_ARENA_WIDTH, MovementSystem.HALF_ARENA_WIDTH);
             spawnPos.y = UnityEngine.Random.Range(-MovementSystem.HALF_ARENA_HEIGHT, MovementSystem.HALF_ARENA_HEIGHT);
-        } while (math.distancesq(spawnPos, Vector3.zero) <= sqrSafetyRadius);
+        } while (math.distancesq(spawnPos, safetyCenter) <= sqrSafetyRadius);
         return spawnPos;
     }
 

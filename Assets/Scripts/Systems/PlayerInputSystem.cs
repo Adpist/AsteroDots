@@ -84,6 +84,8 @@ public partial struct PlayerInputSystem : ISystem
     {
         state.EntityManager.DestroyEntity(state.EntityManager.CreateEntityQuery(typeof(AsteroidStats)));
         state.EntityManager.DestroyEntity(state.EntityManager.CreateEntityQuery(typeof(BulletStats)));
+        state.EntityManager.DestroyEntity(state.EntityManager.CreateEntityQuery(typeof(UFOData)).ToEntityArray(Allocator.Temp));
+
         Entity playerEntity = SystemAPI.GetSingletonEntity<PlayerStats>();
         PlayerStats playerStats = state.EntityManager.GetComponentData<PlayerStats>(playerEntity);
         LocalTransform transform = state.EntityManager.GetComponentData<LocalTransform>(playerEntity);
@@ -101,6 +103,7 @@ public partial struct PlayerInputSystem : ISystem
         Entity spawnManager = SystemAPI.GetSingletonEntity<SpawnManagerData>();
         SpawnManagerData spawnData = state.EntityManager.GetComponentData<SpawnManagerData>(spawnManager);
         spawnData.nextAsteroidSpawnTick = 0;
+        spawnData.nextUFOSpawnTick = 0;
         spawnData.initialSpawnProcessed = false;
         state.EntityManager.SetComponentData(spawnManager, spawnData);
 

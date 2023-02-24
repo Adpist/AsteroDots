@@ -28,6 +28,7 @@ public partial struct CollisionSystem : ISystem
         PlayerStats playerData = state.EntityManager.GetComponentData<PlayerStats>(player);
         NativeArray<Entity> asteroids = state.EntityManager.CreateEntityQuery(typeof(AsteroidStats)).ToEntityArray(Allocator.Temp);
         NativeArray<Entity> bullets = state.EntityManager.CreateEntityQuery(typeof(BulletStats)).ToEntityArray(Allocator.Temp);
+        NativeArray<Entity> UFOs = state.EntityManager.CreateEntityQuery(typeof(UFOData)).ToEntityArray(Allocator.Temp);
 
         foreach (Entity asteroid in asteroids)
         {
@@ -54,6 +55,38 @@ public partial struct CollisionSystem : ISystem
             if (!playerData.dead)
             {
                 if (SphereSphereCollision(player, asteroid, ref state))
+                {
+                    playerData.dead = true;
+                    state.EntityManager.SetComponentData(player, playerData);
+                }
+            }
+        }
+
+        foreach (Entity ufo in UFOs)
+        {
+            UFOData ufoData = state.EntityManager.GetComponentData<UFOData>(ufo);
+            if (!ufoData.destroyed)
+            {
+                foreach (Entity bullet in bullets)
+                {
+                    BulletStats bulletData = state.EntityManager.GetComponentData<BulletStats>(bullet);
+                    if (bulletData.lifeTime > 0)
+                    {
+                        if (SphereSphereCollision(bullet, ufo, ref state))
+                        {
+                            bulletData.lifeTime = 0;
+                            state.EntityManager.SetComponentData(bullet, bulletData);
+                            ufoData.destroyed = true;
+                            state.EntityManager.SetComponentData(ufo, ufoData);
+                            Game.instance.AddToScore(200);
+                        }
+                    }
+                }
+            }
+
+            if (!playerData.dead)
+            {
+                if (SphereSphereCollision(player, ufo, ref state))
                 {
                     playerData.dead = true;
                     state.EntityManager.SetComponentData(player, playerData);
