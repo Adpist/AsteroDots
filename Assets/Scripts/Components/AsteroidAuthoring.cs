@@ -9,7 +9,7 @@ public class AsteroidAuthoring : MonoBehaviour
     {
         public override void Bake(AsteroidAuthoring authoring)
         {
-            var data = new AsteroidStats
+            var data = new AsteroidData
             {
                 size = 8,
                 destroyed = false
@@ -19,7 +19,7 @@ public class AsteroidAuthoring : MonoBehaviour
     }
 }
 
-struct AsteroidStats : IComponentData
+struct AsteroidData : IComponentData
 {
     public bool destroyed;
     public int size;

@@ -13,7 +13,7 @@ public partial struct CollisionSystem : ISystem
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
-        state.RequireForUpdate<PlayerStats>();
+        state.RequireForUpdate<PlayerData>();
     }
 
     [BurstCompile]
@@ -24,21 +24,21 @@ public partial struct CollisionSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        Entity player = SystemAPI.GetSingletonEntity<PlayerStats>();
-        PlayerStats playerData = state.EntityManager.GetComponentData<PlayerStats>(player);
-        NativeArray<Entity> asteroids = state.EntityManager.CreateEntityQuery(typeof(AsteroidStats)).ToEntityArray(Allocator.Temp);
-        NativeArray<Entity> bullets = state.EntityManager.CreateEntityQuery(typeof(BulletStats)).ToEntityArray(Allocator.Temp);
+        Entity player = SystemAPI.GetSingletonEntity<PlayerData>();
+        PlayerData playerData = state.EntityManager.GetComponentData<PlayerData>(player);
+        NativeArray<Entity> asteroids = state.EntityManager.CreateEntityQuery(typeof(AsteroidData)).ToEntityArray(Allocator.Temp);
+        NativeArray<Entity> bullets = state.EntityManager.CreateEntityQuery(typeof(BulletData)).ToEntityArray(Allocator.Temp);
         NativeArray<Entity> UFOs = state.EntityManager.CreateEntityQuery(typeof(UFOData)).ToEntityArray(Allocator.Temp);
         NativeArray<Entity> PowerUps = state.EntityManager.CreateEntityQuery(typeof(PowerUpData)).ToEntityArray(Allocator.Temp);
 
         foreach (Entity asteroid in asteroids)
         {
-            AsteroidStats asteroidData = state.EntityManager.GetComponentData<AsteroidStats>(asteroid);
+            AsteroidData asteroidData = state.EntityManager.GetComponentData<AsteroidData>(asteroid);
             if (!asteroidData.destroyed)
             {
                 foreach (Entity bullet in bullets)
                 {
-                    BulletStats bulletData = state.EntityManager.GetComponentData<BulletStats>(bullet);
+                    BulletData bulletData = state.EntityManager.GetComponentData<BulletData>(bullet);
                     if (bulletData.lifeTime > 0)
                     {
                         if (SphereSphereCollision(bullet, asteroid, ref state))
@@ -70,7 +70,7 @@ public partial struct CollisionSystem : ISystem
             {
                 foreach (Entity bullet in bullets)
                 {
-                    BulletStats bulletData = state.EntityManager.GetComponentData<BulletStats>(bullet);
+                    BulletData bulletData = state.EntityManager.GetComponentData<BulletData>(bullet);
                     if (bulletData.lifeTime > 0)
                     {
                         if (SphereSphereCollision(bullet, ufo, ref state))
@@ -123,6 +123,7 @@ public partial struct CollisionSystem : ISystem
         }
     }
 
+    [BurstCompile]
     public bool SphereSphereCollision(Entity entityA, Entity entityB, ref SystemState state)
     {
         Vector3 posA = state.EntityManager.GetComponentData<LocalTransform>(entityA).Position;

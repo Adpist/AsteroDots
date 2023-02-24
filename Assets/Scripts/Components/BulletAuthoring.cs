@@ -9,7 +9,7 @@ public class BulletAuthoring : MonoBehaviour
     {
         public override void Bake(BulletAuthoring authoring)
         {
-            var data = new BulletStats
+            var data = new BulletData
             {
                 lifeTime = 100
             };
@@ -18,7 +18,7 @@ public class BulletAuthoring : MonoBehaviour
     }
 }
 
-struct BulletStats : IComponentData
+struct BulletData : IComponentData
 {
     public float lifeTime;
 }

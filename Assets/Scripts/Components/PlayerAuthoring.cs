@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.Entities;
 
-public class PlayerStatsAuthoring : MonoBehaviour
+public class PlayerAuthoring : MonoBehaviour
 {
     public float rotationSpeed = 180f;
     public float accelerationSpeed = 10.0f;
@@ -11,11 +11,11 @@ public class PlayerStatsAuthoring : MonoBehaviour
     public float bulletLifeTime = 10.0f;
     public GameObject bulletPrefab;
 
-    public class Baker : Baker<PlayerStatsAuthoring>
+    public class Baker : Baker<PlayerAuthoring>
     {
-        public override void Bake(PlayerStatsAuthoring authoring)
+        public override void Bake(PlayerAuthoring authoring)
         {
-            var data = new PlayerStats
+            var data = new PlayerData
             {
                 accelerationSpeed = authoring.accelerationSpeed,
                 rotationSpeed = authoring.rotationSpeed,
@@ -31,7 +31,7 @@ public class PlayerStatsAuthoring : MonoBehaviour
     }
 }
 
-struct PlayerStats : IComponentData
+struct PlayerData : IComponentData
 {
     public float accelerationSpeed;
     public float rotationSpeed;

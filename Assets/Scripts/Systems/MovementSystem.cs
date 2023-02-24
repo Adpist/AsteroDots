@@ -16,7 +16,7 @@ public partial struct MovementSystem : ISystem
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
-        state.RequireForUpdate<Movement>();
+        state.RequireForUpdate<MovementData>();
     }
 
     [BurstCompile]
@@ -29,7 +29,7 @@ public partial struct MovementSystem : ISystem
     {
         float deltaTime = SystemAPI.Time.DeltaTime;
 
-        foreach(var (transform, movement) in SystemAPI.Query<RefRW<LocalTransform>, RefRW<Movement>>())
+        foreach(var (transform, movement) in SystemAPI.Query<RefRW<LocalTransform>, RefRW<MovementData>>())
         {
             Vector3 acceleration = movement.ValueRO.acceleration;
             Vector3 velocity = movement.ValueRO.velocity;
@@ -50,6 +50,7 @@ public partial struct MovementSystem : ISystem
         }
     }
 
+    [BurstCompile]
     private void HandleWrap(ref Vector3 pos)
     {
         if (pos.x < -HALF_ARENA_WIDTH)

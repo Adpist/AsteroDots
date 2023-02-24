@@ -10,9 +10,6 @@ using UnityEngine;
 [BurstCompile]
 public partial struct SpawnSystem : ISystem
 {
-
-    public bool needReinit;
-
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
@@ -45,7 +42,7 @@ public partial struct SpawnSystem : ISystem
         }
         else
         {
-            Entity playerEntity = SystemAPI.GetSingletonEntity<PlayerStats>();
+            Entity playerEntity = SystemAPI.GetSingletonEntity<PlayerData>();
             LocalTransform playerTransform = state.EntityManager.GetComponentData<LocalTransform>(playerEntity);
             if (SystemAPI.Time.ElapsedTime > spawnData.nextAsteroidSpawnTick)
             {
@@ -79,21 +76,21 @@ public partial struct SpawnSystem : ISystem
                 state.EntityManager.SetComponentData(spawnManager, spawnData);
             }
 
-            NativeArray<Entity> asteroids = state.EntityManager.CreateEntityQuery(typeof(AsteroidStats)).ToEntityArray(Allocator.Temp);
+            NativeArray<Entity> asteroids = state.EntityManager.CreateEntityQuery(typeof(AsteroidData)).ToEntityArray(Allocator.Temp);
             foreach(Entity asteroid in asteroids)
             {
-                AsteroidStats asteroidStats = state.EntityManager.GetComponentData<AsteroidStats>(asteroid);
-                if (asteroidStats.destroyed)
+                AsteroidData asteroidData = state.EntityManager.GetComponentData<AsteroidData>(asteroid);
+                if (asteroidData.destroyed)
                 {
-                    if (asteroidStats.size > 2)
+                    if (asteroidData.size > 2)
                     {
-                        Movement asteroidMovement = state.EntityManager.GetComponentData<Movement>(asteroid);
+                        MovementData asteroidMovement = state.EntityManager.GetComponentData<MovementData>(asteroid);
                         Vector3 asteroidPos = state.EntityManager.GetComponentData<LocalTransform>(asteroid).Position;
                         Vector3 asteroidVelocity = asteroidMovement.velocity;
                         float speed = asteroidVelocity.magnitude;
                         asteroidVelocity /= speed;
                         Vector3 perpDir = Vector3.Cross(asteroidVelocity, Vector3.forward);
-                        int childSize = asteroidStats.size / 2;
+                        int childSize = asteroidData.size / 2;
                         Vector3 firstChildVelocityDir = asteroidVelocity + perpDir;
                         firstChildVelocityDir.Normalize();
                         Vector3 secondChildVelocityDir = asteroidVelocity - perpDir;
@@ -133,17 +130,19 @@ public partial struct SpawnSystem : ISystem
     {
         Entity newAsteroid = ecb.Instantiate(prefab);
         ecb.SetComponent(newAsteroid, new LocalTransform { Position = pos, Rotation = Quaternion.identity, Scale = asteroidSize });
-        ecb.SetComponent(newAsteroid, new Movement { acceleration = Vector3.zero, velocity = velocityDir * speed, angularVelocity = 0, maxSpeed = speed });
+        ecb.SetComponent(newAsteroid, new MovementData { acceleration = Vector3.zero, velocity = velocityDir * speed, angularVelocity = 0, maxSpeed = speed });
         ecb.SetComponent(newAsteroid, new SphereColliderData { radius = asteroidSize/2 });
-        ecb.SetComponent(newAsteroid, new AsteroidStats { destroyed = false, size = asteroidSize });
+        ecb.SetComponent(newAsteroid, new AsteroidData { destroyed = false, size = asteroidSize });
     }
 
+    [BurstCompile]
     private void SpawnUFO(ref EntityCommandBuffer ecb, Entity prefab, Vector3 pos)
     {
         Entity newUFO = ecb.Instantiate(prefab);
         ecb.SetComponent(newUFO, new LocalTransform { Position = pos, Rotation = Quaternion.identity, Scale = 1 });
     }
 
+    [BurstCompile]
     private void SpawnPowerUp(ref EntityCommandBuffer ecb, Entity prefab, Vector3 pos)
     {
         Entity newPowerUp = ecb.Instantiate(prefab);

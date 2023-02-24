@@ -12,7 +12,7 @@ public partial struct BulletSystem : ISystem
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
-        state.RequireForUpdate<BulletStats>();
+        state.RequireForUpdate<BulletData>();
     }
 
     [BurstCompile]
@@ -23,10 +23,10 @@ public partial struct BulletSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        EntityQuery query = state.EntityManager.CreateEntityQuery(typeof(BulletStats));
+        EntityQuery query = state.EntityManager.CreateEntityQuery(typeof(BulletData));
         foreach (Entity bulletEntity in query.ToEntityArray(Allocator.Temp))
         {
-            BulletStats bullet = state.EntityManager.GetComponentData<BulletStats>(bulletEntity);
+            BulletData bullet = state.EntityManager.GetComponentData<BulletData>(bulletEntity);
             bullet.lifeTime -= SystemAPI.Time.DeltaTime;
             state.EntityManager.SetComponentData(bulletEntity, bullet);
             if (bullet.lifeTime <= 0)

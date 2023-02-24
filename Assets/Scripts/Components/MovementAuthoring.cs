@@ -14,7 +14,7 @@ public class MovementAuthoring : MonoBehaviour
     {
         public override void Bake(MovementAuthoring authoring)
         {
-            var data = new Movement
+            var data = new MovementData
             {
                 acceleration = authoring.acceleration,
                 velocity = authoring.velocity,
@@ -26,7 +26,7 @@ public class MovementAuthoring : MonoBehaviour
     }
 }
 
-struct Movement : IComponentData
+struct MovementData : IComponentData
 {
     public float3 acceleration;
     public float3 velocity;
