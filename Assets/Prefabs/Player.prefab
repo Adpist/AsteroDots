@@ -70,8 +70,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   rotationSpeed: 180
   accelerationSpeed: 30
-  bulletSpeed: 25
-  bulletLifeTime: 2
+  bulletSpeed: 50
+  bulletLifeTime: 1.25
   multiBulletAngle: 30
   bulletPrefab: {fileID: 839019687271756760, guid: 892b7a73e09960941997fabe681d4fbe, type: 3}
 --- !u!114 &2166347330854645127
