@@ -29,6 +29,7 @@ public partial struct CollisionSystem : ISystem
         NativeArray<Entity> asteroids = state.EntityManager.CreateEntityQuery(typeof(AsteroidStats)).ToEntityArray(Allocator.Temp);
         NativeArray<Entity> bullets = state.EntityManager.CreateEntityQuery(typeof(BulletStats)).ToEntityArray(Allocator.Temp);
         NativeArray<Entity> UFOs = state.EntityManager.CreateEntityQuery(typeof(UFOData)).ToEntityArray(Allocator.Temp);
+        NativeArray<Entity> PowerUps = state.EntityManager.CreateEntityQuery(typeof(PowerUpData)).ToEntityArray(Allocator.Temp);
 
         foreach (Entity asteroid in asteroids)
         {
@@ -52,7 +53,7 @@ public partial struct CollisionSystem : ISystem
                 }
             }
 
-            if (!playerData.dead)
+            if (!playerData.dead && SystemAPI.Time.ElapsedTime >= playerData.invulnerabilityExpireTick)
             {
                 if (SphereSphereCollision(player, asteroid, ref state))
                 {
@@ -84,12 +85,39 @@ public partial struct CollisionSystem : ISystem
                 }
             }
 
-            if (!playerData.dead)
+            if (!playerData.dead && SystemAPI.Time.ElapsedTime >= playerData.invulnerabilityExpireTick)
             {
                 if (SphereSphereCollision(player, ufo, ref state))
                 {
                     playerData.dead = true;
                     state.EntityManager.SetComponentData(player, playerData);
+                }
+            }
+        }
+
+        foreach (Entity powerUp in PowerUps)
+        {
+            PowerUpData powerUpData = state.EntityManager.GetComponentData<PowerUpData>(powerUp);
+            if (!powerUpData.picked)
+            {
+                if (!playerData.dead)
+                {
+                    if (SphereSphereCollision(player, powerUp, ref state))
+                    {
+                        powerUpData.picked = true;
+                        switch(powerUpData.type)
+                        {
+                            case PowerUpType.Shield:
+                                playerData.invulnerabilityExpireTick = SystemAPI.Time.ElapsedTime + (double)powerUpData.duration;
+                                break;
+
+                            case PowerUpType.MultiShoot:
+                                playerData.multiShootExpireTick = SystemAPI.Time.ElapsedTime + (double)powerUpData.duration;
+                                break;
+                        }
+                        state.EntityManager.SetComponentData(powerUp, powerUpData);
+                        state.EntityManager.SetComponentData(player, playerData);
+                    }
                 }
             }
         }

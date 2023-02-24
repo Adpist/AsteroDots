@@ -13,10 +13,15 @@ public class SpawnManagerAuthoring : MonoBehaviour
     public float minUFOSpawnDelay = 15;
     public float maxUFOSpawnDelay = 30;
 
+    public float minPowerUpDelay = 15;
+    public float maxPowerUpDelay = 30;
+
     public int initialAsteroidsCount = 5;
     public float safetyRadius = 15;
     public GameObject asteroidPrefab;
     public GameObject ufoPrefab;
+    public GameObject multiShootPrefab;
+    public GameObject shieldPrefab;
 
     public class Baker : Baker<SpawnManagerAuthoring>
     {
@@ -30,12 +35,16 @@ public class SpawnManagerAuthoring : MonoBehaviour
                 maxAsteroidSpeed = authoring.maxAsteroidSpeed,
                 minUFOSpawnDelay = authoring.minUFOSpawnDelay,
                 maxUFOSpawnDelay = authoring.maxUFOSpawnDelay,
+                minPowerUpDelay = authoring.minPowerUpDelay,
+                maxPowerUpDelay = authoring.maxPowerUpDelay,
                 initialAsteroidsCount = authoring.initialAsteroidsCount,
                 sqrSafetyRadius = authoring.safetyRadius * authoring.safetyRadius,
                 nextAsteroidSpawnTick = 0,
                 nextUFOSpawnTick = 0,
                 asteroidPrefab = GetEntity(authoring.asteroidPrefab),
                 ufoPrefab = GetEntity(authoring.ufoPrefab),
+                multiShootPrefab = GetEntity(authoring.multiShootPrefab),
+                shieldPrefab = GetEntity(authoring.shieldPrefab),
                 initialSpawnProcessed = false
             };
             AddComponent(data);
@@ -47,15 +56,23 @@ struct SpawnManagerData : IComponentData
 {
     public float minAsteroidSpawnDelay;
     public float maxAsteroidSpawnDelay;
+    public double nextAsteroidSpawnTick;
     public float minAsteroidSpeed;
     public float maxAsteroidSpeed;
     public int initialAsteroidsCount;
+
     public float minUFOSpawnDelay;
     public float maxUFOSpawnDelay;
-    public float sqrSafetyRadius;
-    public double nextAsteroidSpawnTick;
     public double nextUFOSpawnTick;
+
+    public float minPowerUpDelay;
+    public float maxPowerUpDelay;
+    public double nextPowerUpSpawnTick;
+
+    public float sqrSafetyRadius;
     public Entity asteroidPrefab;
     public Entity ufoPrefab;
+    public Entity multiShootPrefab;
+    public Entity shieldPrefab;
     public bool initialSpawnProcessed;
 }

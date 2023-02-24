@@ -22,6 +22,8 @@ public class PlayerStatsAuthoring : MonoBehaviour
                 bulletSpeed = authoring.bulletSpeed,
                 bulletLifeTime = authoring.bulletLifeTime,
                 bulletPrefab = GetEntity(authoring.bulletPrefab),
+                invulnerabilityExpireTick = 0,
+                multiShootExpireTick = 0,
                 dead = false
             };
             AddComponent(data);
@@ -36,5 +38,7 @@ struct PlayerStats : IComponentData
     public float bulletSpeed;
     public float bulletLifeTime;
     public Entity bulletPrefab;
+    public double invulnerabilityExpireTick;
+    public double multiShootExpireTick;
     public bool dead;
 }

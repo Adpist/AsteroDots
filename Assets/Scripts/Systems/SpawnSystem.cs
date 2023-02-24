@@ -38,8 +38,9 @@ public partial struct SpawnSystem : ISystem
                 SpawnAsteroid(ref ecb, spawnData.asteroidPrefab, GetEnnemySpawnPos(Vector3.zero, spawnData.sqrSafetyRadius), GetAsteroidVelocityDirection(), speed, 8);
             }
             spawnData.nextAsteroidSpawnTick = SystemAPI.Time.ElapsedTime + UnityEngine.Random.Range(spawnData.minAsteroidSpawnDelay, spawnData.maxAsteroidSpawnDelay);
-            spawnData.initialSpawnProcessed = true;
             spawnData.nextUFOSpawnTick = SystemAPI.Time.ElapsedTime + UnityEngine.Random.Range(spawnData.minUFOSpawnDelay, spawnData.maxUFOSpawnDelay);
+            spawnData.nextPowerUpSpawnTick = SystemAPI.Time.ElapsedTime + UnityEngine.Random.Range(spawnData.minPowerUpDelay, spawnData.maxPowerUpDelay);
+            spawnData.initialSpawnProcessed = true;
             state.EntityManager.SetComponentData(spawnManager, spawnData);
         }
         else
@@ -58,6 +59,23 @@ public partial struct SpawnSystem : ISystem
             {
                 SpawnUFO(ref ecb, spawnData.ufoPrefab, GetEnnemySpawnPos(playerTransform.Position, spawnData.sqrSafetyRadius));
                 spawnData.nextUFOSpawnTick = SystemAPI.Time.ElapsedTime + UnityEngine.Random.Range(spawnData.minUFOSpawnDelay, spawnData.maxUFOSpawnDelay);
+                state.EntityManager.SetComponentData(spawnManager, spawnData);
+            }
+
+            if(SystemAPI.Time.ElapsedTime > spawnData.nextPowerUpSpawnTick)
+            {
+                PowerUpType type = (PowerUpType)UnityEngine.Random.Range(0, (int)PowerUpType.Count);
+                switch(type)
+                {
+                    case PowerUpType.Shield:
+                        SpawnPowerUp(ref ecb, spawnData.shieldPrefab, GetRandomSpawnPos());
+                        break;
+
+                    case PowerUpType.MultiShoot:
+                        SpawnPowerUp(ref ecb, spawnData.multiShootPrefab, GetRandomSpawnPos());
+                        break;
+                }
+                spawnData.nextPowerUpSpawnTick = SystemAPI.Time.ElapsedTime + UnityEngine.Random.Range(spawnData.minPowerUpDelay, spawnData.maxPowerUpDelay);
                 state.EntityManager.SetComponentData(spawnManager, spawnData);
             }
 
@@ -96,6 +114,16 @@ public partial struct SpawnSystem : ISystem
                     state.EntityManager.DestroyEntity(ufo);
                 }
             }
+
+            NativeArray<Entity> powerUps = state.EntityManager.CreateEntityQuery(typeof(PowerUpData)).ToEntityArray(Allocator.Temp);
+            foreach (Entity powerUp in powerUps)
+            {
+                PowerUpData powerUpData = state.EntityManager.GetComponentData<PowerUpData>(powerUp);
+                if (powerUpData.picked)
+                {
+                    state.EntityManager.DestroyEntity(powerUp);
+                }
+            }
         }
         ecb.Playback(state.EntityManager);
     }
@@ -116,15 +144,30 @@ public partial struct SpawnSystem : ISystem
         ecb.SetComponent(newUFO, new LocalTransform { Position = pos, Rotation = Quaternion.identity, Scale = 1 });
     }
 
+    private void SpawnPowerUp(ref EntityCommandBuffer ecb, Entity prefab, Vector3 pos)
+    {
+        Entity newPowerUp = ecb.Instantiate(prefab);
+        ecb.SetComponent(newPowerUp, new LocalTransform { Position = pos, Rotation = Quaternion.identity, Scale = 1 });
+    }
+
     [BurstCompile]
     public Vector3 GetEnnemySpawnPos(Vector3 safetyCenter, float sqrSafetyRadius)
     {
         Vector3 spawnPos = Vector3.zero;
         do
         {
-            spawnPos.x = UnityEngine.Random.Range(-MovementSystem.HALF_ARENA_WIDTH, MovementSystem.HALF_ARENA_WIDTH);
-            spawnPos.y = UnityEngine.Random.Range(-MovementSystem.HALF_ARENA_HEIGHT, MovementSystem.HALF_ARENA_HEIGHT);
+            spawnPos = GetRandomSpawnPos();
         } while (math.distancesq(spawnPos, safetyCenter) <= sqrSafetyRadius);
+        return spawnPos;
+    }
+
+
+    [BurstCompile]
+    public Vector3 GetRandomSpawnPos()
+    {
+        Vector3 spawnPos = Vector3.zero;
+        spawnPos.x = UnityEngine.Random.Range(-MovementSystem.HALF_ARENA_WIDTH, MovementSystem.HALF_ARENA_WIDTH);
+        spawnPos.y = UnityEngine.Random.Range(-MovementSystem.HALF_ARENA_HEIGHT, MovementSystem.HALF_ARENA_HEIGHT);
         return spawnPos;
     }
 
