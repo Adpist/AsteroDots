@@ -452,8 +452,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 14a5edfa7a8b4404697d993206613a90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  score: 0
-  highScore: 0
+  arenaWidth: 100
+  arenaHeight: 100
 --- !u!4 &1695545663
 Transform:
   m_ObjectHideFlags: 0

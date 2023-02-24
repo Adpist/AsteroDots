@@ -175,7 +175,7 @@ public partial struct SpawnSystem : ISystem
     private void SpawnAsteroid(ref EntityCommandBuffer ecb, Entity prefab, Vector3 pos, Vector3 velocityDir, float speed, int asteroidSize, int baseScore)
     {
         Entity newAsteroid = ecb.Instantiate(prefab);
-        ecb.SetComponent(newAsteroid, new LocalTransform { Position = pos, Rotation = Quaternion.identity, Scale = asteroidSize });
+        ecb.SetComponent(newAsteroid, new LocalTransform { Position = pos, Rotation = GetRandomRotation(), Scale = asteroidSize });
         ecb.SetComponent(newAsteroid, new MovementData { acceleration = Vector3.zero, velocity = velocityDir * speed, angularVelocity = 0, maxSpeed = speed });
         ecb.SetComponent(newAsteroid, new SphereColliderData { radius = asteroidSize/2 });
         ecb.SetComponent(newAsteroid, new AsteroidData { size = asteroidSize });
@@ -217,6 +217,16 @@ public partial struct SpawnSystem : ISystem
         spawnPos.x = UnityEngine.Random.Range(-arenaHalfWidth, arenaHalfWidth);
         spawnPos.y = UnityEngine.Random.Range(-arenaHalfHeight, arenaHalfHeight);
         return spawnPos;
+    }
+
+    [BurstCompile]
+    public Quaternion GetRandomRotation()
+    {
+        Vector3 euler = Vector3.zero;
+        euler.x = UnityEngine.Random.Range(-180, 180);
+        euler.y = UnityEngine.Random.Range(-180, 180);
+        euler.z = UnityEngine.Random.Range(-180, 180);
+        return Quaternion.Euler(euler);
     }
 
     [BurstCompile]
