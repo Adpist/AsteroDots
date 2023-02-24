@@ -33,8 +33,7 @@ public class UFOAuthoring : MonoBehaviour
                 chaseMaxSpeed = authoring.chaseMaxSpeed,
                 minWanderDirectionChangeDelay = authoring.minWanderDirectionChangeDelay,
                 maxWanderDirectionChangeDelay = authoring.maxWanderDirectionChangeDelay,
-                nextDirectionChangeTick = 0,
-                destroyed = false
+                nextDirectionChangeTick = 0
             };
             AddComponent(data);
         }
@@ -52,5 +51,4 @@ struct UFOData : IComponentData
     public float minWanderDirectionChangeDelay;
     public float maxWanderDirectionChangeDelay;
     public float nextDirectionChangeTick;
-    public bool destroyed;
 }

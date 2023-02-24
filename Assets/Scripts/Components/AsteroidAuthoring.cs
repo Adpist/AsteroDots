@@ -11,8 +11,7 @@ public class AsteroidAuthoring : MonoBehaviour
         {
             var data = new AsteroidData
             {
-                size = 8,
-                destroyed = false
+                size = 8
             };
             AddComponent(data);
         }
@@ -21,6 +20,5 @@ public class AsteroidAuthoring : MonoBehaviour
 
 struct AsteroidData : IComponentData
 {
-    public bool destroyed;
     public int size;
 }

@@ -80,7 +80,8 @@ public partial struct SpawnSystem : ISystem
             foreach(Entity asteroid in asteroids)
             {
                 AsteroidData asteroidData = state.EntityManager.GetComponentData<AsteroidData>(asteroid);
-                if (asteroidData.destroyed)
+                EnemyData enemyData = state.EntityManager.GetComponentData<EnemyData>(asteroid);
+                if (enemyData.destroyed)
                 {
                     if (asteroidData.size > 2)
                     {
@@ -105,8 +106,8 @@ public partial struct SpawnSystem : ISystem
             NativeArray<Entity> ufos = state.EntityManager.CreateEntityQuery(typeof(UFOData)).ToEntityArray(Allocator.Temp);
             foreach (Entity ufo in ufos)
             {
-                UFOData ufoData = state.EntityManager.GetComponentData<UFOData>(ufo);
-                if (ufoData.destroyed)
+                EnemyData enemyData = state.EntityManager.GetComponentData<EnemyData>(ufo);
+                if (enemyData.destroyed)
                 {
                     state.EntityManager.DestroyEntity(ufo);
                 }
@@ -121,6 +122,10 @@ public partial struct SpawnSystem : ISystem
                     state.EntityManager.DestroyEntity(powerUp);
                 }
             }
+
+            asteroids.Dispose();
+            ufos.Dispose();
+            powerUps.Dispose();
         }
         ecb.Playback(state.EntityManager);
     }
@@ -132,7 +137,8 @@ public partial struct SpawnSystem : ISystem
         ecb.SetComponent(newAsteroid, new LocalTransform { Position = pos, Rotation = Quaternion.identity, Scale = asteroidSize });
         ecb.SetComponent(newAsteroid, new MovementData { acceleration = Vector3.zero, velocity = velocityDir * speed, angularVelocity = 0, maxSpeed = speed });
         ecb.SetComponent(newAsteroid, new SphereColliderData { radius = asteroidSize/2 });
-        ecb.SetComponent(newAsteroid, new AsteroidData { destroyed = false, size = asteroidSize });
+        ecb.SetComponent(newAsteroid, new AsteroidData { size = asteroidSize });
+        ecb.SetComponent(newAsteroid, new EnemyData { destroyed = false, score = asteroidSize * 10 });
     }
 
     [BurstCompile]

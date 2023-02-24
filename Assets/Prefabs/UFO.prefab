@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 4345364888468254908}
   - component: {fileID: 8702112867694804985}
   - component: {fileID: 5576980746362099153}
+  - component: {fileID: 3363174808277181386}
   m_Layer: 0
   m_Name: UFO
   m_TagString: Untagged
@@ -88,6 +89,19 @@ MonoBehaviour:
   chaseMaxSpeed: 15
   minWanderDirectionChangeDelay: 10
   maxWanderDirectionChangeDelay: 20
+--- !u!114 &3363174808277181386
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1065300826835996236}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e5794f9b25ea5574baee52f62fa2d5cf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  score: 200
 --- !u!1 &2667305719626272337
 GameObject:
   m_ObjectHideFlags: 0

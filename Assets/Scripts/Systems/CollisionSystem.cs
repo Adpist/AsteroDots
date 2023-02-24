@@ -26,28 +26,27 @@ public partial struct CollisionSystem : ISystem
     {
         Entity player = SystemAPI.GetSingletonEntity<PlayerData>();
         PlayerData playerData = state.EntityManager.GetComponentData<PlayerData>(player);
-        NativeArray<Entity> asteroids = state.EntityManager.CreateEntityQuery(typeof(AsteroidData)).ToEntityArray(Allocator.Temp);
         NativeArray<Entity> bullets = state.EntityManager.CreateEntityQuery(typeof(BulletData)).ToEntityArray(Allocator.Temp);
-        NativeArray<Entity> UFOs = state.EntityManager.CreateEntityQuery(typeof(UFOData)).ToEntityArray(Allocator.Temp);
         NativeArray<Entity> PowerUps = state.EntityManager.CreateEntityQuery(typeof(PowerUpData)).ToEntityArray(Allocator.Temp);
+        NativeArray<Entity> enemies = state.EntityManager.CreateEntityQuery(typeof(EnemyData)).ToEntityArray(Allocator.Temp);
 
-        foreach (Entity asteroid in asteroids)
+        foreach (Entity enemy in enemies)
         {
-            AsteroidData asteroidData = state.EntityManager.GetComponentData<AsteroidData>(asteroid);
-            if (!asteroidData.destroyed)
+            EnemyData enemyData = state.EntityManager.GetComponentData<EnemyData>(enemy);
+            if (!enemyData.destroyed)
             {
                 foreach (Entity bullet in bullets)
                 {
                     BulletData bulletData = state.EntityManager.GetComponentData<BulletData>(bullet);
                     if (bulletData.lifeTime > 0)
                     {
-                        if (SphereSphereCollision(bullet, asteroid, ref state))
+                        if (SphereSphereCollision(bullet, enemy, ref state))
                         {
                             bulletData.lifeTime = 0;
                             state.EntityManager.SetComponentData(bullet, bulletData);
-                            asteroidData.destroyed = true;
-                            state.EntityManager.SetComponentData(asteroid, asteroidData);
-                            Game.instance.AddToScore(10 * asteroidData.size);
+                            enemyData.destroyed = true;
+                            state.EntityManager.SetComponentData(enemy, enemyData);
+                            Game.instance.AddToScore(enemyData.score);
                         }
                     }
                 }
@@ -55,39 +54,7 @@ public partial struct CollisionSystem : ISystem
 
             if (!playerData.dead && SystemAPI.Time.ElapsedTime >= playerData.invulnerabilityExpireTick)
             {
-                if (SphereSphereCollision(player, asteroid, ref state))
-                {
-                    playerData.dead = true;
-                    state.EntityManager.SetComponentData(player, playerData);
-                }
-            }
-        }
-
-        foreach (Entity ufo in UFOs)
-        {
-            UFOData ufoData = state.EntityManager.GetComponentData<UFOData>(ufo);
-            if (!ufoData.destroyed)
-            {
-                foreach (Entity bullet in bullets)
-                {
-                    BulletData bulletData = state.EntityManager.GetComponentData<BulletData>(bullet);
-                    if (bulletData.lifeTime > 0)
-                    {
-                        if (SphereSphereCollision(bullet, ufo, ref state))
-                        {
-                            bulletData.lifeTime = 0;
-                            state.EntityManager.SetComponentData(bullet, bulletData);
-                            ufoData.destroyed = true;
-                            state.EntityManager.SetComponentData(ufo, ufoData);
-                            Game.instance.AddToScore(200);
-                        }
-                    }
-                }
-            }
-
-            if (!playerData.dead && SystemAPI.Time.ElapsedTime >= playerData.invulnerabilityExpireTick)
-            {
-                if (SphereSphereCollision(player, ufo, ref state))
+                if (SphereSphereCollision(player, enemy, ref state))
                 {
                     playerData.dead = true;
                     state.EntityManager.SetComponentData(player, playerData);
@@ -121,6 +88,10 @@ public partial struct CollisionSystem : ISystem
                 }
             }
         }
+
+        bullets.Dispose();
+        enemies.Dispose();
+        PowerUps.Dispose();
     }
 
     [BurstCompile]
