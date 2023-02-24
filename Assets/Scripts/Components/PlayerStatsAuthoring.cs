@@ -21,7 +21,8 @@ public class PlayerStatsAuthoring : MonoBehaviour
                 rotationSpeed = authoring.rotationSpeed,
                 bulletSpeed = authoring.bulletSpeed,
                 bulletLifeTime = authoring.bulletLifeTime,
-                bulletPrefab = GetEntity(authoring.bulletPrefab)
+                bulletPrefab = GetEntity(authoring.bulletPrefab),
+                dead = false
             };
             AddComponent(data);
         }
@@ -35,4 +36,5 @@ struct PlayerStats : IComponentData
     public float bulletSpeed;
     public float bulletLifeTime;
     public Entity bulletPrefab;
+    public bool dead;
 }

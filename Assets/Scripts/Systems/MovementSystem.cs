@@ -16,6 +16,7 @@ public partial struct MovementSystem : ISystem
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
+        state.RequireForUpdate<Movement>();
     }
 
     [BurstCompile]

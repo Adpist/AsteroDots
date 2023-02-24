@@ -13,6 +13,7 @@ public partial struct PlayerInputSystem : ISystem
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
+        state.RequireForUpdate<PlayerStats>();
     }
 
     [BurstCompile]
@@ -30,41 +31,79 @@ public partial struct PlayerInputSystem : ISystem
         bool accelerating = Input.GetKey(KeyCode.UpArrow);
         bool shooting = Input.GetKeyDown(KeyCode.Space);
 
-        EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.Temp);
-        foreach (var (playerStats, transform, movement) in SystemAPI.Query<RefRO<PlayerStats>, RefRW<LocalTransform>, RefRW<Movement>>())
+        Entity playerEntity = SystemAPI.GetSingletonEntity<PlayerStats>();
+        PlayerStats playerStats = state.EntityManager.GetComponentData<PlayerStats>(playerEntity);
+        LocalTransform transform = state.EntityManager.GetComponentData<LocalTransform>(playerEntity);
+        Movement movement = state.EntityManager.GetComponentData<Movement>(playerEntity);
+
+        if (playerStats.dead)
         {
+            RestartGame(ref state);
+        }
+        else
+        {
+            EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.Temp);
+        
             float angularSpeed = 0;
             Vector3 acceleration = Vector3.zero;
             if (left)
             {
-                angularSpeed += playerStats.ValueRO.rotationSpeed;
+                angularSpeed += playerStats.rotationSpeed;
             }
 
             if (right)
             {
-                angularSpeed -= playerStats.ValueRO.rotationSpeed;
+                angularSpeed -= playerStats.rotationSpeed;
             }
 
             if (accelerating)
             {
-                acceleration = transform.ValueRO.Up();
-                acceleration *= playerStats.ValueRO.accelerationSpeed;
+                acceleration = transform.Up();
+                acceleration *= playerStats.accelerationSpeed;
             }
 
-            movement.ValueRW.angularVelocity = angularSpeed;
-            movement.ValueRW.acceleration = acceleration;
+            movement.angularVelocity = angularSpeed;
+            movement.acceleration = acceleration;
+            state.EntityManager.SetComponentData<Movement>(playerEntity, movement);
 
             if (shooting)
             {
-                Entity newBullet = ecb.Instantiate(playerStats.ValueRO.bulletPrefab);
-                Vector3 spawnPos = transform.ValueRO.Position + transform.ValueRO.Up();
-                Vector3 bulletVelocity = movement.ValueRO.velocity + transform.ValueRO.Up() * playerStats.ValueRO.bulletSpeed;
+                Entity newBullet = ecb.Instantiate(playerStats.bulletPrefab);
+                Vector3 spawnPos = transform.Position + transform.Up();
+                Vector3 bulletVelocity = movement.velocity + transform.Up() * playerStats.bulletSpeed;
                 ecb.SetComponent(newBullet, new LocalTransform { Position = spawnPos, Rotation = Quaternion.identity, Scale = 1 });
-                ecb.SetComponent(newBullet, new Movement { acceleration = Vector3.zero, velocity = bulletVelocity, angularVelocity = 0, maxSpeed = movement.ValueRO.maxSpeed + playerStats.ValueRO.bulletSpeed });
-                ecb.SetComponent(newBullet, new BulletStats { lifeTime = playerStats.ValueRO.bulletLifeTime });
+                ecb.SetComponent(newBullet, new Movement { acceleration = Vector3.zero, velocity = bulletVelocity, angularVelocity = 0, maxSpeed = movement.maxSpeed + playerStats.bulletSpeed });
+                ecb.SetComponent(newBullet, new BulletStats { lifeTime = playerStats.bulletLifeTime });
             }
+        
+            ecb.Playback(state.EntityManager);
         }
+    }
 
-        ecb.Playback(state.EntityManager);
+    void RestartGame(ref SystemState state)
+    {
+        state.EntityManager.DestroyEntity(state.EntityManager.CreateEntityQuery(typeof(AsteroidStats)));
+        state.EntityManager.DestroyEntity(state.EntityManager.CreateEntityQuery(typeof(BulletStats)));
+        Entity playerEntity = SystemAPI.GetSingletonEntity<PlayerStats>();
+        PlayerStats playerStats = state.EntityManager.GetComponentData<PlayerStats>(playerEntity);
+        LocalTransform transform = state.EntityManager.GetComponentData<LocalTransform>(playerEntity);
+        Movement movement = state.EntityManager.GetComponentData<Movement>(playerEntity);
+        playerStats.dead = false;
+        transform.Position = Vector3.zero;
+        transform.Rotation = Quaternion.identity;
+        movement.acceleration = Vector3.zero;
+        movement.velocity = Vector3.zero;
+        movement.angularVelocity = 0;
+        state.EntityManager.SetComponentData<PlayerStats>(playerEntity, playerStats);
+        state.EntityManager.SetComponentData<LocalTransform>(playerEntity, transform);
+        state.EntityManager.SetComponentData<Movement>(playerEntity, movement);
+
+        Entity spawnManager = SystemAPI.GetSingletonEntity<SpawnManagerData>();
+        SpawnManagerData spawnData = state.EntityManager.GetComponentData<SpawnManagerData>(spawnManager);
+        spawnData.nextAsteroidSpawnTick = 0;
+        spawnData.initialSpawnProcessed = false;
+        state.EntityManager.SetComponentData(spawnManager, spawnData);
+
+        Game.instance.ResetScore();
     }
 }
