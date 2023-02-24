@@ -47,7 +47,7 @@ public partial struct SpawnSystem : ISystem
                 EnemyData enemyData = state.EntityManager.GetComponentData<EnemyData>(asteroid);
                 if (enemyData.destroyed)
                 {
-                    if (asteroidData.size > 2)
+                    if (asteroidData.size > spawnData.minAsteroidSize)
                     {
                         SplitAsteroid(ref state, ref ecb, asteroid, ref asteroidData, ref spawnData);
                     }
@@ -87,8 +87,7 @@ public partial struct SpawnSystem : ISystem
     {
         if (SystemAPI.Time.ElapsedTime > spawnData.nextAsteroidSpawnTick)
         {
-            float speed = UnityEngine.Random.Range(spawnData.minAsteroidSpeed, spawnData.maxAsteroidSpeed);
-            SpawnAsteroid(ref ecb, spawnData.asteroidPrefab, GetEnnemySpawnPos(playerPosition, spawnData.sqrSafetyRadius), GetAsteroidVelocityDirection(), speed, 8);
+            SpawnBigAsteroid(ref ecb, ref spawnData, playerPosition);
             spawnData.nextAsteroidSpawnTick = SystemAPI.Time.ElapsedTime + UnityEngine.Random.Range(spawnData.minAsteroidSpawnDelay, spawnData.maxAsteroidSpawnDelay);
             state.EntityManager.SetComponentData(spawnManager, spawnData);
         }
@@ -131,14 +130,21 @@ public partial struct SpawnSystem : ISystem
     {
         for (int i = 0; i < spawnData.initialAsteroidsCount; ++i)
         {
-            float speed = UnityEngine.Random.Range(spawnData.minAsteroidSpeed, spawnData.maxAsteroidSpeed);
-            SpawnAsteroid(ref ecb, spawnData.asteroidPrefab, GetEnnemySpawnPos(Vector3.zero, spawnData.sqrSafetyRadius), GetAsteroidVelocityDirection(), speed, 8);
+            SpawnBigAsteroid(ref ecb, ref spawnData, Vector3.zero);
         }
         spawnData.nextAsteroidSpawnTick = SystemAPI.Time.ElapsedTime + UnityEngine.Random.Range(spawnData.minAsteroidSpawnDelay, spawnData.maxAsteroidSpawnDelay);
         spawnData.nextUFOSpawnTick = SystemAPI.Time.ElapsedTime + UnityEngine.Random.Range(spawnData.minUFOSpawnDelay, spawnData.maxUFOSpawnDelay);
         spawnData.nextPowerUpSpawnTick = SystemAPI.Time.ElapsedTime + UnityEngine.Random.Range(spawnData.minPowerUpDelay, spawnData.maxPowerUpDelay);
         spawnData.initialSpawnProcessed = true;
         state.EntityManager.SetComponentData(spawnManager, spawnData);
+    }
+
+    [BurstCompile]
+    private void SpawnBigAsteroid(ref EntityCommandBuffer ecb, ref SpawnManagerData spawnData, Vector3 playerPosition)
+    {
+        float speed = UnityEngine.Random.Range(spawnData.minAsteroidSpeed, spawnData.maxAsteroidSpeed);
+        Vector3 spawnPos = GetEnnemySpawnPos(playerPosition, spawnData.sqrSafetyRadius);
+        SpawnAsteroid(ref ecb, spawnData.asteroidPrefab, spawnPos, GetAsteroidVelocityDirection(), speed, spawnData.asteroidSpawnSize, spawnData.asteroidBaseScore);
     }
 
     [BurstCompile]
@@ -151,23 +157,29 @@ public partial struct SpawnSystem : ISystem
         asteroidVelocity /= speed;
         Vector3 perpDir = Vector3.Cross(asteroidVelocity, Vector3.forward);
         int childSize = srcAsteroidData.size / 2;
-        Vector3 firstChildVelocityDir = asteroidVelocity + perpDir;
-        firstChildVelocityDir.Normalize();
-        Vector3 secondChildVelocityDir = asteroidVelocity - perpDir;
-        secondChildVelocityDir.Normalize();
-        SpawnAsteroid(ref ecb, spawnData.asteroidPrefab, asteroidPos + firstChildVelocityDir * childSize, firstChildVelocityDir, speed * UnityEngine.Random.Range(0.5f, 1.5f), childSize);
-        SpawnAsteroid(ref ecb, spawnData.asteroidPrefab, asteroidPos + secondChildVelocityDir * childSize, secondChildVelocityDir, speed * UnityEngine.Random.Range(0.5f, 1.5f), childSize);
 
+        SpawnChildAsteroid(ref ecb, ref spawnData, asteroidPos, asteroidVelocity, perpDir, speed, childSize);
+        SpawnChildAsteroid(ref ecb, ref spawnData, asteroidPos, asteroidVelocity, -perpDir, speed, childSize);
     }
+
     [BurstCompile]
-    private void SpawnAsteroid(ref EntityCommandBuffer ecb, Entity prefab, Vector3 pos, Vector3 velocityDir, float speed, int asteroidSize)
+    private void SpawnChildAsteroid(ref EntityCommandBuffer ecb, ref SpawnManagerData spawnData, Vector3 parentPos, Vector3 parentVelocity, Vector3 dirOffset, float parentSpeed, int childSize)
+    {
+        Vector3 velocityDir = parentVelocity + dirOffset;
+        velocityDir.Normalize();
+        float childSpeed = parentSpeed * UnityEngine.Random.Range(spawnData.minAsteroidSplitSpeedMultiplier, spawnData.maxAsteroidSplitSpeedMultiplier);
+        SpawnAsteroid(ref ecb, spawnData.asteroidPrefab, parentPos + velocityDir * childSize, velocityDir, childSpeed, childSize, spawnData.asteroidBaseScore);
+    }
+
+    [BurstCompile]
+    private void SpawnAsteroid(ref EntityCommandBuffer ecb, Entity prefab, Vector3 pos, Vector3 velocityDir, float speed, int asteroidSize, int baseScore)
     {
         Entity newAsteroid = ecb.Instantiate(prefab);
         ecb.SetComponent(newAsteroid, new LocalTransform { Position = pos, Rotation = Quaternion.identity, Scale = asteroidSize });
         ecb.SetComponent(newAsteroid, new MovementData { acceleration = Vector3.zero, velocity = velocityDir * speed, angularVelocity = 0, maxSpeed = speed });
         ecb.SetComponent(newAsteroid, new SphereColliderData { radius = asteroidSize/2 });
         ecb.SetComponent(newAsteroid, new AsteroidData { size = asteroidSize });
-        ecb.SetComponent(newAsteroid, new EnemyData { destroyed = false, score = asteroidSize * 10 });
+        ecb.SetComponent(newAsteroid, new EnemyData { destroyed = false, score = asteroidSize * baseScore });
     }
 
     [BurstCompile]
@@ -200,8 +212,10 @@ public partial struct SpawnSystem : ISystem
     public Vector3 GetRandomSpawnPos()
     {
         Vector3 spawnPos = Vector3.zero;
-        spawnPos.x = UnityEngine.Random.Range(-MovementSystem.HALF_ARENA_WIDTH, MovementSystem.HALF_ARENA_WIDTH);
-        spawnPos.y = UnityEngine.Random.Range(-MovementSystem.HALF_ARENA_HEIGHT, MovementSystem.HALF_ARENA_HEIGHT);
+        float arenaHalfWidth = Game.instance.arenaWidth * 0.5f;
+        float arenaHalfHeight = Game.instance.arenaHeight * 0.5f;
+        spawnPos.x = UnityEngine.Random.Range(-arenaHalfWidth, arenaHalfWidth);
+        spawnPos.y = UnityEngine.Random.Range(-arenaHalfHeight, arenaHalfHeight);
         return spawnPos;
     }
 

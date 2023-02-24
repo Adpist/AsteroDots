@@ -10,9 +10,6 @@ using Unity.Mathematics;
 [BurstCompile]
 public partial struct MovementSystem : ISystem
 {
-    public static readonly float HALF_ARENA_WIDTH = 50;
-    public static readonly float HALF_ARENA_HEIGHT = 50;
-
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
@@ -53,22 +50,25 @@ public partial struct MovementSystem : ISystem
     [BurstCompile]
     private void HandleWrap(ref Vector3 pos)
     {
-        if (pos.x < -HALF_ARENA_WIDTH)
+        float arenaHalfWidth = Game.instance.arenaWidth * 0.5f;
+        float arenaHalfHeight = Game.instance.arenaHeight * 0.5f;
+
+        if (pos.x < -arenaHalfWidth)
         {
-            pos.x += HALF_ARENA_WIDTH * 2.0f;
+            pos.x += Game.instance.arenaWidth;
         }
-        else if (pos.x > HALF_ARENA_WIDTH)
+        else if (pos.x > arenaHalfWidth)
         {
-            pos.x -= HALF_ARENA_WIDTH * 2.0f;
+            pos.x -= Game.instance.arenaWidth;
         }
 
-        if (pos.y < -HALF_ARENA_HEIGHT)
+        if (pos.y < -arenaHalfHeight)
         {
-            pos.y += HALF_ARENA_HEIGHT * 2.0f;
+            pos.y += Game.instance.arenaHeight;
         }
-        else if (pos.y > HALF_ARENA_HEIGHT)
+        else if (pos.y > arenaHalfHeight)
         {
-            pos.y -= HALF_ARENA_HEIGHT * 2.0f;
+            pos.y -= Game.instance.arenaHeight;
         }
     }
 }

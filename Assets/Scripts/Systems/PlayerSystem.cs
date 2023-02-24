@@ -90,8 +90,8 @@ public partial struct PlayerSystem : ISystem
             SpawnBullet(ref ecb, playerData.bulletPrefab, transform.Position, transform.Up(), bulletVelocity, 0, bulletMaxSpeed, playerData.bulletLifeTime);
             if (SystemAPI.Time.ElapsedTime < playerData.multiShootExpireTick)
             {
-                SpawnBullet(ref ecb, playerData.bulletPrefab, transform.Position, transform.Up(), bulletVelocity, -30, bulletMaxSpeed, playerData.bulletLifeTime);
-                SpawnBullet(ref ecb, playerData.bulletPrefab, transform.Position, transform.Up(), bulletVelocity, 30, bulletMaxSpeed, playerData.bulletLifeTime);
+                SpawnBullet(ref ecb, playerData.bulletPrefab, transform.Position, transform.Up(), bulletVelocity, -playerData.multiBulletAngle, bulletMaxSpeed, playerData.bulletLifeTime);
+                SpawnBullet(ref ecb, playerData.bulletPrefab, transform.Position, transform.Up(), bulletVelocity, playerData.multiBulletAngle, bulletMaxSpeed, playerData.bulletLifeTime);
             }
         }
 

@@ -7,7 +7,6 @@ using Unity.Mathematics;
 using Unity.Collections;
 using UnityEngine;
 
-
 [BurstCompile]
 public partial struct UFOSystem : ISystem
 {

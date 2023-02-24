@@ -8,8 +8,12 @@ using UnityEngine.Events;
 public class Game : MonoBehaviour
 {
     public static Game instance = null;
-    public int score = 0;
-    public int highScore = 0;
+
+    public float arenaWidth = 100;
+    public float arenaHeight = 100;
+
+    private int score = 0;
+    private int highScore = 0;
 
     private void Awake()
     {
