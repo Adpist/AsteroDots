@@ -28,10 +28,13 @@ public partial struct BulletSystem : ISystem
         {
             BulletData bullet = state.EntityManager.GetComponentData<BulletData>(bulletEntity);
             bullet.lifeTime -= SystemAPI.Time.DeltaTime;
-            state.EntityManager.SetComponentData(bulletEntity, bullet);
             if (bullet.lifeTime <= 0)
             {
                 state.EntityManager.DestroyEntity(bulletEntity);
+            }
+            else
+            {
+                state.EntityManager.SetComponentData(bulletEntity, bullet);
             }
         }
     }

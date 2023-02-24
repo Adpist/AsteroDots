@@ -29,52 +29,16 @@ public partial struct SpawnSystem : ISystem
         EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.Temp);
         if (!spawnData.initialSpawnProcessed)
         {
-            for (int i = 0; i < spawnData.initialAsteroidsCount; ++i)
-            {
-                float speed = UnityEngine.Random.Range(spawnData.minAsteroidSpeed, spawnData.maxAsteroidSpeed);
-                SpawnAsteroid(ref ecb, spawnData.asteroidPrefab, GetEnnemySpawnPos(Vector3.zero, spawnData.sqrSafetyRadius), GetAsteroidVelocityDirection(), speed, 8);
-            }
-            spawnData.nextAsteroidSpawnTick = SystemAPI.Time.ElapsedTime + UnityEngine.Random.Range(spawnData.minAsteroidSpawnDelay, spawnData.maxAsteroidSpawnDelay);
-            spawnData.nextUFOSpawnTick = SystemAPI.Time.ElapsedTime + UnityEngine.Random.Range(spawnData.minUFOSpawnDelay, spawnData.maxUFOSpawnDelay);
-            spawnData.nextPowerUpSpawnTick = SystemAPI.Time.ElapsedTime + UnityEngine.Random.Range(spawnData.minPowerUpDelay, spawnData.maxPowerUpDelay);
-            spawnData.initialSpawnProcessed = true;
-            state.EntityManager.SetComponentData(spawnManager, spawnData);
+            ProcessInitialSpawn(ref state, ref ecb, ref spawnManager, ref spawnData);
         }
         else
         {
             Entity playerEntity = SystemAPI.GetSingletonEntity<PlayerData>();
             LocalTransform playerTransform = state.EntityManager.GetComponentData<LocalTransform>(playerEntity);
-            if (SystemAPI.Time.ElapsedTime > spawnData.nextAsteroidSpawnTick)
-            {
-                float speed = UnityEngine.Random.Range(spawnData.minAsteroidSpeed, spawnData.maxAsteroidSpeed);
-                SpawnAsteroid(ref ecb, spawnData.asteroidPrefab, GetEnnemySpawnPos(playerTransform.Position, spawnData.sqrSafetyRadius), GetAsteroidVelocityDirection(), speed, 8);
-                spawnData.nextAsteroidSpawnTick = SystemAPI.Time.ElapsedTime + UnityEngine.Random.Range(spawnData.minAsteroidSpawnDelay, spawnData.maxAsteroidSpawnDelay);
-                state.EntityManager.SetComponentData(spawnManager, spawnData);
-            }
 
-            if(SystemAPI.Time.ElapsedTime > spawnData.nextUFOSpawnTick)
-            {
-                SpawnUFO(ref ecb, spawnData.ufoPrefab, GetEnnemySpawnPos(playerTransform.Position, spawnData.sqrSafetyRadius));
-                spawnData.nextUFOSpawnTick = SystemAPI.Time.ElapsedTime + UnityEngine.Random.Range(spawnData.minUFOSpawnDelay, spawnData.maxUFOSpawnDelay);
-                state.EntityManager.SetComponentData(spawnManager, spawnData);
-            }
-
-            if(SystemAPI.Time.ElapsedTime > spawnData.nextPowerUpSpawnTick)
-            {
-                PowerUpType type = (PowerUpType)UnityEngine.Random.Range(0, (int)PowerUpType.Count);
-                switch(type)
-                {
-                    case PowerUpType.Shield:
-                        SpawnPowerUp(ref ecb, spawnData.shieldPrefab, GetRandomSpawnPos());
-                        break;
-
-                    case PowerUpType.MultiShoot:
-                        SpawnPowerUp(ref ecb, spawnData.multiShootPrefab, GetRandomSpawnPos());
-                        break;
-                }
-                spawnData.nextPowerUpSpawnTick = SystemAPI.Time.ElapsedTime + UnityEngine.Random.Range(spawnData.minPowerUpDelay, spawnData.maxPowerUpDelay);
-                state.EntityManager.SetComponentData(spawnManager, spawnData);
-            }
+            UpdateAsteroidSpawn(ref state, ref ecb, ref spawnManager, ref spawnData, playerTransform.Position);
+            UpdateUFOSpawn(ref state, ref ecb, ref spawnManager, ref spawnData, playerTransform.Position);
+            UpdatePowerUpSpawn(ref state, ref ecb, ref spawnManager, ref spawnData);
 
             NativeArray<Entity> asteroids = state.EntityManager.CreateEntityQuery(typeof(AsteroidData)).ToEntityArray(Allocator.Temp);
             foreach(Entity asteroid in asteroids)
@@ -85,19 +49,7 @@ public partial struct SpawnSystem : ISystem
                 {
                     if (asteroidData.size > 2)
                     {
-                        MovementData asteroidMovement = state.EntityManager.GetComponentData<MovementData>(asteroid);
-                        Vector3 asteroidPos = state.EntityManager.GetComponentData<LocalTransform>(asteroid).Position;
-                        Vector3 asteroidVelocity = asteroidMovement.velocity;
-                        float speed = asteroidVelocity.magnitude;
-                        asteroidVelocity /= speed;
-                        Vector3 perpDir = Vector3.Cross(asteroidVelocity, Vector3.forward);
-                        int childSize = asteroidData.size / 2;
-                        Vector3 firstChildVelocityDir = asteroidVelocity + perpDir;
-                        firstChildVelocityDir.Normalize();
-                        Vector3 secondChildVelocityDir = asteroidVelocity - perpDir;
-                        secondChildVelocityDir.Normalize();
-                        SpawnAsteroid(ref ecb, spawnData.asteroidPrefab, asteroidPos + firstChildVelocityDir * childSize, firstChildVelocityDir, speed * UnityEngine.Random.Range(0.5f, 1.5f), childSize);
-                        SpawnAsteroid(ref ecb, spawnData.asteroidPrefab, asteroidPos + secondChildVelocityDir * childSize, secondChildVelocityDir, speed * UnityEngine.Random.Range(0.5f, 1.5f), childSize);
+                        SplitAsteroid(ref state, ref ecb, asteroid, ref asteroidData, ref spawnData);
                     }
                     state.EntityManager.DestroyEntity(asteroid);
                 }
@@ -130,6 +82,83 @@ public partial struct SpawnSystem : ISystem
         ecb.Playback(state.EntityManager);
     }
 
+    [BurstCompile]
+    private void UpdateAsteroidSpawn(ref SystemState state, ref EntityCommandBuffer ecb, ref Entity spawnManager, ref SpawnManagerData spawnData, Vector3 playerPosition)
+    {
+        if (SystemAPI.Time.ElapsedTime > spawnData.nextAsteroidSpawnTick)
+        {
+            float speed = UnityEngine.Random.Range(spawnData.minAsteroidSpeed, spawnData.maxAsteroidSpeed);
+            SpawnAsteroid(ref ecb, spawnData.asteroidPrefab, GetEnnemySpawnPos(playerPosition, spawnData.sqrSafetyRadius), GetAsteroidVelocityDirection(), speed, 8);
+            spawnData.nextAsteroidSpawnTick = SystemAPI.Time.ElapsedTime + UnityEngine.Random.Range(spawnData.minAsteroidSpawnDelay, spawnData.maxAsteroidSpawnDelay);
+            state.EntityManager.SetComponentData(spawnManager, spawnData);
+        }
+    }
+
+    [BurstCompile]
+    private void UpdateUFOSpawn(ref SystemState state, ref EntityCommandBuffer ecb, ref Entity spawnManager, ref SpawnManagerData spawnData, Vector3 playerPosition)
+    {
+        if (SystemAPI.Time.ElapsedTime > spawnData.nextUFOSpawnTick)
+        {
+            SpawnUFO(ref ecb, spawnData.ufoPrefab, GetEnnemySpawnPos(playerPosition, spawnData.sqrSafetyRadius));
+            spawnData.nextUFOSpawnTick = SystemAPI.Time.ElapsedTime + UnityEngine.Random.Range(spawnData.minUFOSpawnDelay, spawnData.maxUFOSpawnDelay);
+            state.EntityManager.SetComponentData(spawnManager, spawnData);
+        }
+    }
+
+    [BurstCompile]
+    private void UpdatePowerUpSpawn(ref SystemState state, ref EntityCommandBuffer ecb, ref Entity spawnManager, ref SpawnManagerData spawnData)
+    {
+        if (SystemAPI.Time.ElapsedTime > spawnData.nextPowerUpSpawnTick)
+        {
+            PowerUpType type = (PowerUpType)UnityEngine.Random.Range(0, (int)PowerUpType.Count);
+            switch (type)
+            {
+                case PowerUpType.Shield:
+                    SpawnPowerUp(ref ecb, spawnData.shieldPrefab, GetRandomSpawnPos());
+                    break;
+
+                case PowerUpType.MultiShoot:
+                    SpawnPowerUp(ref ecb, spawnData.multiShootPrefab, GetRandomSpawnPos());
+                    break;
+            }
+            spawnData.nextPowerUpSpawnTick = SystemAPI.Time.ElapsedTime + UnityEngine.Random.Range(spawnData.minPowerUpDelay, spawnData.maxPowerUpDelay);
+            state.EntityManager.SetComponentData(spawnManager, spawnData);
+        }
+    }
+
+    [BurstCompile]
+    private void ProcessInitialSpawn(ref SystemState state, ref EntityCommandBuffer ecb, ref Entity spawnManager, ref SpawnManagerData spawnData)
+    {
+        for (int i = 0; i < spawnData.initialAsteroidsCount; ++i)
+        {
+            float speed = UnityEngine.Random.Range(spawnData.minAsteroidSpeed, spawnData.maxAsteroidSpeed);
+            SpawnAsteroid(ref ecb, spawnData.asteroidPrefab, GetEnnemySpawnPos(Vector3.zero, spawnData.sqrSafetyRadius), GetAsteroidVelocityDirection(), speed, 8);
+        }
+        spawnData.nextAsteroidSpawnTick = SystemAPI.Time.ElapsedTime + UnityEngine.Random.Range(spawnData.minAsteroidSpawnDelay, spawnData.maxAsteroidSpawnDelay);
+        spawnData.nextUFOSpawnTick = SystemAPI.Time.ElapsedTime + UnityEngine.Random.Range(spawnData.minUFOSpawnDelay, spawnData.maxUFOSpawnDelay);
+        spawnData.nextPowerUpSpawnTick = SystemAPI.Time.ElapsedTime + UnityEngine.Random.Range(spawnData.minPowerUpDelay, spawnData.maxPowerUpDelay);
+        spawnData.initialSpawnProcessed = true;
+        state.EntityManager.SetComponentData(spawnManager, spawnData);
+    }
+
+    [BurstCompile]
+    private void SplitAsteroid(ref SystemState state, ref EntityCommandBuffer ecb, Entity srcAsteroid, ref AsteroidData srcAsteroidData, ref SpawnManagerData spawnData)
+    {
+        MovementData asteroidMovement = state.EntityManager.GetComponentData<MovementData>(srcAsteroid);
+        Vector3 asteroidPos = state.EntityManager.GetComponentData<LocalTransform>(srcAsteroid).Position;
+        Vector3 asteroidVelocity = asteroidMovement.velocity;
+        float speed = asteroidVelocity.magnitude;
+        asteroidVelocity /= speed;
+        Vector3 perpDir = Vector3.Cross(asteroidVelocity, Vector3.forward);
+        int childSize = srcAsteroidData.size / 2;
+        Vector3 firstChildVelocityDir = asteroidVelocity + perpDir;
+        firstChildVelocityDir.Normalize();
+        Vector3 secondChildVelocityDir = asteroidVelocity - perpDir;
+        secondChildVelocityDir.Normalize();
+        SpawnAsteroid(ref ecb, spawnData.asteroidPrefab, asteroidPos + firstChildVelocityDir * childSize, firstChildVelocityDir, speed * UnityEngine.Random.Range(0.5f, 1.5f), childSize);
+        SpawnAsteroid(ref ecb, spawnData.asteroidPrefab, asteroidPos + secondChildVelocityDir * childSize, secondChildVelocityDir, speed * UnityEngine.Random.Range(0.5f, 1.5f), childSize);
+
+    }
     [BurstCompile]
     private void SpawnAsteroid(ref EntityCommandBuffer ecb, Entity prefab, Vector3 pos, Vector3 velocityDir, float speed, int asteroidSize)
     {
