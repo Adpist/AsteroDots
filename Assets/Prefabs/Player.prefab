@@ -55,7 +55,7 @@ MonoBehaviour:
     x: 0
     y: 0
     z: 0
-  maxSpeed: 10
+  maxSpeed: 20
 --- !u!114 &2166347330854645124
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -69,7 +69,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   rotationSpeed: 180
-  accelerationSpeed: 10
+  accelerationSpeed: 30
   bulletSpeed: 25
   bulletLifeTime: 2
   multiBulletAngle: 30

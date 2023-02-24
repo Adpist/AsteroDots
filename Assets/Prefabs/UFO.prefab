@@ -84,9 +84,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   chaseRadius: 25
   wanderAcceleration: 30
-  wanderMaxSpeed: 7.5
+  wanderMaxSpeed: 15
   chaseAcceleration: 50
-  chaseMaxSpeed: 15
+  chaseMaxSpeed: 25
   minWanderDirectionChangeDelay: 10
   maxWanderDirectionChangeDelay: 20
 --- !u!114 &3363174808277181386
