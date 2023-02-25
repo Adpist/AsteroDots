@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.Entities;
 
-public class SpawnManagerAuthoring : MonoBehaviour
+public class SpawnAuthoring : MonoBehaviour
 {
     public float minAsteroidSpawnDelay = 10;
     public float maxAsteroidSpawnDelay = 20;
@@ -29,43 +29,97 @@ public class SpawnManagerAuthoring : MonoBehaviour
     public GameObject multiShootPrefab;
     public GameObject shieldPrefab;
 
-    public class Baker : Baker<SpawnManagerAuthoring>
+    public class Baker : Baker<SpawnAuthoring>
     {
-        public override void Bake(SpawnManagerAuthoring authoring)
+        public override void Bake(SpawnAuthoring authoring)
         {
-            var data = new SpawnManagerData
+            SpawnDesignData spawnDesign = new SpawnDesignData
+            {
+                sqrSafetyRadius = authoring.safetyRadius * authoring.safetyRadius
+            };
+
+            SpawnAsteroidDesignData asteroidDesign = new SpawnAsteroidDesignData
             {
                 minAsteroidSpawnDelay = authoring.minAsteroidSpawnDelay,
                 maxAsteroidSpawnDelay = authoring.maxAsteroidSpawnDelay,
                 minAsteroidSpeed = authoring.minAsteroidSpeed,
                 maxAsteroidSpeed = authoring.maxAsteroidSpeed,
-                asteroidSpawnSize = authoring.asteroidSpawnSize,
-                minAsteroidSize = authoring.minAsteroidSize,
                 minAsteroidSplitSpeedMultiplier = authoring.minAsteroidSplitSpeedMultiplier,
                 maxAsteroidSplitSpeedMultiplier = authoring.maxAsteroidSplitSpeedMultiplier,
+                asteroidSpawnSize = authoring.asteroidSpawnSize,
+                minAsteroidSize = authoring.minAsteroidSize,
                 asteroidBaseScore = authoring.asteroidBaseScore,
+                initialAsteroidsCount = authoring.initialAsteroidsCount,
+                asteroidPrefab = GetEntity(authoring.asteroidPrefab)
+            };
+
+            SpawnUFODesignData ufoDesign = new SpawnUFODesignData
+            {
                 minUFOSpawnDelay = authoring.minUFOSpawnDelay,
                 maxUFOSpawnDelay = authoring.maxUFOSpawnDelay,
+                ufoPrefab = GetEntity(authoring.ufoPrefab)
+            };
+
+            SpawnPowerUpDesignData powerUpDesign = new SpawnPowerUpDesignData
+            {
                 minPowerUpDelay = authoring.minPowerUpDelay,
                 maxPowerUpDelay = authoring.maxPowerUpDelay,
-                initialAsteroidsCount = authoring.initialAsteroidsCount,
-                sqrSafetyRadius = authoring.safetyRadius * authoring.safetyRadius,
-                nextAsteroidSpawnTick = 0,
-                nextUFOSpawnTick = 0,
-                asteroidPrefab = GetEntity(authoring.asteroidPrefab),
-                ufoPrefab = GetEntity(authoring.ufoPrefab),
                 multiShootPrefab = GetEntity(authoring.multiShootPrefab),
-                shieldPrefab = GetEntity(authoring.shieldPrefab),
+                shieldPrefab = GetEntity(authoring.shieldPrefab)
+            };
+
+            SpawnRuntimeData spawnRuntime = new SpawnRuntimeData
+            {
+                nextUFOSpawnTick = 0,
+                nextPowerUpSpawnTick = 0,
+                nextAsteroidSpawnTick = 0,
                 initialSpawnProcessed = false
             };
-            AddComponent(data);
+
+            AddComponent(spawnDesign);
+            AddComponent(asteroidDesign);
+            AddComponent(ufoDesign);
+            AddComponent(powerUpDesign);
+            AddComponent(spawnRuntime);
         }
     }
 }
 
-struct SpawnManagerData : IComponentData
+struct SpawnAsteroidDesignData : IComponentData
 {
     public float minAsteroidSpawnDelay;
+    public float maxAsteroidSpawnDelay;
+    public float minAsteroidSpeed;
+    public float maxAsteroidSpeed;
+    public float minAsteroidSplitSpeedMultiplier;
+    public float maxAsteroidSplitSpeedMultiplier;
+    public int asteroidSpawnSize;
+    public int minAsteroidSize;
+    public int initialAsteroidsCount;
+    public int asteroidBaseScore;
+    public Entity asteroidPrefab;
+}
+
+struct SpawnUFODesignData : IComponentData
+{
+    public float minUFOSpawnDelay;
+    public float maxUFOSpawnDelay;
+    public Entity ufoPrefab;
+}
+
+struct SpawnPowerUpDesignData : IComponentData
+{
+    public float minPowerUpDelay;
+    public float maxPowerUpDelay;
+    public Entity multiShootPrefab;
+    public Entity shieldPrefab;
+}
+
+struct SpawnDesignData : IComponentData
+{
+    public float sqrSafetyRadius;
+
+    /*public float minAsteroidSpawnDelay;
     public float maxAsteroidSpawnDelay;
     public double nextAsteroidSpawnTick;
     public float minAsteroidSpeed;
@@ -85,12 +139,18 @@ struct SpawnManagerData : IComponentData
     public float maxPowerUpDelay;
     public double nextPowerUpSpawnTick;
 
-    public float sqrSafetyRadius;
-
     public Entity asteroidPrefab;
     public Entity ufoPrefab;
     public Entity multiShootPrefab;
     public Entity shieldPrefab;
 
+    public bool initialSpawnProcessed;*/
+}
+
+struct SpawnRuntimeData : IComponentData
+{
+    public double nextUFOSpawnTick;
+    public double nextPowerUpSpawnTick;
+    public double nextAsteroidSpawnTick;
     public bool initialSpawnProcessed;
 }

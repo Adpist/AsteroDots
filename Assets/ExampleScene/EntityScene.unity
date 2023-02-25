@@ -572,6 +572,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: SpawnManager
       objectReference: {fileID: 0}
+    - target: {fileID: 8866750662489941847, guid: f327d2b1861e9f245804953363adc9d0, type: 3}
+      propertyPath: safetyRadius
+      value: 25
+      objectReference: {fileID: 0}
+    - target: {fileID: 8866750662489941847, guid: f327d2b1861e9f245804953363adc9d0, type: 3}
+      propertyPath: maxAsteroidSpawnDelay
+      value: 15
+      objectReference: {fileID: 0}
+    - target: {fileID: 8866750662489941847, guid: f327d2b1861e9f245804953363adc9d0, type: 3}
+      propertyPath: minAsteroidSpawnDelay
+      value: 7.5
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

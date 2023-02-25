@@ -121,7 +121,8 @@ public partial struct PlayerSystem : ISystem
         DestroyAll<PowerUpData>(ref state);
         
         ResetPlayer(ref state);
-        ResetSpawnManager(ref state);
+        SpawnAspect spawn = SystemAPI.GetAspectRW<SpawnAspect>(SystemAPI.GetSingletonEntity<SpawnDesignData>());
+        spawn.ResetRuntimeData();
         Game.instance.ResetScore();
     }
 
@@ -149,17 +150,5 @@ public partial struct PlayerSystem : ISystem
         state.EntityManager.SetComponentData<PlayerData>(playerEntity, playerData);
         state.EntityManager.SetComponentData<LocalTransform>(playerEntity, transform);
         state.EntityManager.SetComponentData<MovementData>(playerEntity, movement);
-    }
-
-    [BurstCompile]
-    void ResetSpawnManager(ref SystemState state)
-    {
-        Entity spawnManager = SystemAPI.GetSingletonEntity<SpawnManagerData>();
-        SpawnManagerData spawnData = state.EntityManager.GetComponentData<SpawnManagerData>(spawnManager);
-        spawnData.nextAsteroidSpawnTick = 0;
-        spawnData.nextUFOSpawnTick = 0;
-        spawnData.nextPowerUpSpawnTick = 0;
-        spawnData.initialSpawnProcessed = false;
-        state.EntityManager.SetComponentData(spawnManager, spawnData);
     }
 }
