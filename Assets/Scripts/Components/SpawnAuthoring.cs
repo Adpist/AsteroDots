@@ -11,6 +11,8 @@ public class SpawnAuthoring : MonoBehaviour
     public float maxAsteroidSpeed = 10;
     public float minAsteroidSplitSpeedMultiplier = 0.5f;
     public float maxAsteroidSplitSpeedMultiplier = 1.5f;
+    public float minAsteroidAngularSpeed = -180.0f;
+    public float maxAsteroidAngularSpeed = 180.0f;
     public int asteroidSpawnSize = 8;
     public int minAsteroidSize = 2;
     public int asteroidBaseScore = 10;
@@ -46,6 +48,8 @@ public class SpawnAuthoring : MonoBehaviour
                 maxAsteroidSpeed = authoring.maxAsteroidSpeed,
                 minAsteroidSplitSpeedMultiplier = authoring.minAsteroidSplitSpeedMultiplier,
                 maxAsteroidSplitSpeedMultiplier = authoring.maxAsteroidSplitSpeedMultiplier,
+                minAsteroidAngularSpeed = authoring.minAsteroidAngularSpeed,
+                maxAsteroidAngularSpeed = authoring.maxAsteroidAngularSpeed,
                 asteroidSpawnSize = authoring.asteroidSpawnSize,
                 minAsteroidSize = authoring.minAsteroidSize,
                 asteroidBaseScore = authoring.asteroidBaseScore,
@@ -93,6 +97,8 @@ struct SpawnAsteroidDesignData : IComponentData
     public float maxAsteroidSpeed;
     public float minAsteroidSplitSpeedMultiplier;
     public float maxAsteroidSplitSpeedMultiplier;
+    public float minAsteroidAngularSpeed;
+    public float maxAsteroidAngularSpeed;
     public int asteroidSpawnSize;
     public int minAsteroidSize;
     public int initialAsteroidsCount;

@@ -62,6 +62,11 @@ public readonly partial struct SpawnAspect : IAspect
         return UnityEngine.Random.Range(asteroidDesignData.ValueRO.minAsteroidSpeed, asteroidDesignData.ValueRO.maxAsteroidSpeed);
     }
 
+    public float GetRandomAsteroidAngularVelocity()
+    {
+        return UnityEngine.Random.Range(asteroidDesignData.ValueRO.minAsteroidAngularSpeed, asteroidDesignData.ValueRO.maxAsteroidAngularSpeed);
+    }
+
     public float GetRandomChildAsteroidSpeedMultiplier()
     {
         return UnityEngine.Random.Range(asteroidDesignData.ValueRO.minAsteroidSplitSpeedMultiplier, asteroidDesignData.ValueRO.maxAsteroidSplitSpeedMultiplier);

@@ -183,7 +183,7 @@ public partial struct SpawnSystem : ISystem
     {
         Entity newAsteroid = ecb.Instantiate(spawnRO.AsteroidPrefab);
         ecb.SetComponent(newAsteroid, new LocalTransform { Position = pos, Rotation = spawnRO.GetRandomRotation(), Scale = asteroidSize });
-        ecb.SetComponent(newAsteroid, new MovementData { acceleration = float3.zero, velocity = velocityDir * speed, angularVelocity = 0, maxSpeed = speed });
+        ecb.SetComponent(newAsteroid, new MovementData { acceleration = float3.zero, velocity = velocityDir * speed, angularVelocity = spawnRO.GetRandomAsteroidAngularVelocity(), maxSpeed = speed });
         ecb.SetComponent(newAsteroid, new SphereColliderData { radius = asteroidSize/2 });
         ecb.SetComponent(newAsteroid, new AsteroidData { size = asteroidSize });
         ecb.SetComponent(newAsteroid, new EnemyData { destroyed = false, score = asteroidSize * spawnRO.AsteroidBaseScore });
