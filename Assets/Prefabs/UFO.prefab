@@ -102,6 +102,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   score: 200
+  enemyType: 1
 --- !u!1 &8133618064811649849
 GameObject:
   m_ObjectHideFlags: 0

@@ -9,16 +9,15 @@ public class BulletAuthoring : MonoBehaviour
     {
         public override void Bake(BulletAuthoring authoring)
         {
-            var data = new BulletData
+            LifeTimeData lifeTimeData = new LifeTimeData
             {
-                lifeTime = 100
+                expirationTick = double.MaxValue
             };
-            AddComponent(data);
+
+            AddComponent(new BulletTag { });
+            AddComponent(new LifeTimeData { });
         }
     }
 }
 
-struct BulletData : IComponentData
-{
-    public float lifeTime;
-}
+struct BulletTag : IComponentData { }

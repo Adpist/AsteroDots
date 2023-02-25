@@ -3,9 +3,18 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.Entities;
 
+public enum EnemyType
+{
+    Asteroid,
+    UFO,
+    Count,
+    Invalid
+}
+
 public class EnemyAuthoring : MonoBehaviour
 {
     public int score = 10;
+    public EnemyType enemyType = EnemyType.Invalid;
 
     public class Baker : Baker<EnemyAuthoring>
     {
@@ -14,7 +23,7 @@ public class EnemyAuthoring : MonoBehaviour
             var data = new EnemyData
             {
                 score = authoring.score,
-                destroyed = false
+                enemyType = authoring.enemyType
             };
             AddComponent(data);
         }
@@ -23,6 +32,6 @@ public class EnemyAuthoring : MonoBehaviour
 
 struct EnemyData : IComponentData
 {
-    public bool destroyed;
+    public EnemyType enemyType;
     public int score;
 }

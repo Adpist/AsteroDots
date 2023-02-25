@@ -147,6 +147,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   score: 10
+  enemyType: 0
 --- !u!1001 &6003427105073625956
 PrefabInstance:
   m_ObjectHideFlags: 0

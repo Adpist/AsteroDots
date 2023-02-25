@@ -49,46 +49,21 @@ public partial struct SpawnSystem : ISystem
             UpdateUFOSpawn(ref state, ref ecb, playerPosition);
             UpdatePowerUpSpawn(ref state, ref ecb);
 
-            NativeArray<Entity> asteroids = state.EntityManager.CreateEntityQuery(typeof(AsteroidData)).ToEntityArray(Allocator.Temp);
+            NativeArray<Entity> asteroids = state.EntityManager.CreateEntityQuery(typeof(HitAsteroidTag)).ToEntityArray(Allocator.Temp);
+
             foreach(Entity asteroid in asteroids)
             {
                 AsteroidData asteroidData = state.EntityManager.GetComponentData<AsteroidData>(asteroid);
-                EnemyData enemyData = state.EntityManager.GetComponentData<EnemyData>(asteroid);
-                if (enemyData.destroyed)
+                if (spawnRO.CanSplitAsteroid(asteroidData.size))
                 {
-                    if (spawnRO.CanSplitAsteroid(asteroidData.size))
-                    {
-                        float3 asteroidPos = state.EntityManager.GetComponentData<LocalTransform>(asteroid).Position;
-                        float3 asteroidVelocity = state.EntityManager.GetComponentData<MovementData>(asteroid).velocity;
-                        SplitAsteroid(ref ecb, asteroidPos, asteroidVelocity, asteroidData.size);
-                    }
-                    state.EntityManager.DestroyEntity(asteroid);
+                    float3 asteroidPos = state.EntityManager.GetComponentData<LocalTransform>(asteroid).Position;
+                    float3 asteroidVelocity = state.EntityManager.GetComponentData<MovementData>(asteroid).velocity;
+                    SplitAsteroid(ref ecb, asteroidPos, asteroidVelocity, asteroidData.size);
                 }
-            }
-
-            NativeArray<Entity> ufos = state.EntityManager.CreateEntityQuery(typeof(UFOData)).ToEntityArray(Allocator.Temp);
-            foreach (Entity ufo in ufos)
-            {
-                EnemyData enemyData = state.EntityManager.GetComponentData<EnemyData>(ufo);
-                if (enemyData.destroyed)
-                {
-                    state.EntityManager.DestroyEntity(ufo);
-                }
-            }
-
-            NativeArray<Entity> powerUps = state.EntityManager.CreateEntityQuery(typeof(PowerUpData)).ToEntityArray(Allocator.Temp);
-            foreach (Entity powerUp in powerUps)
-            {
-                PowerUpData powerUpData = state.EntityManager.GetComponentData<PowerUpData>(powerUp);
-                if (powerUpData.picked)
-                {
-                    state.EntityManager.DestroyEntity(powerUp);
-                }
+                ecb.DestroyEntity(asteroid);
             }
 
             asteroids.Dispose();
-            ufos.Dispose();
-            powerUps.Dispose();
         }
         ecb.Playback(state.EntityManager);
     }
@@ -186,7 +161,7 @@ public partial struct SpawnSystem : ISystem
         ecb.SetComponent(newAsteroid, new MovementData { acceleration = float3.zero, velocity = velocityDir * speed, angularVelocity = spawnRO.GetRandomAsteroidAngularVelocity(), maxSpeed = speed });
         ecb.SetComponent(newAsteroid, new SphereColliderData { radius = asteroidSize/2 });
         ecb.SetComponent(newAsteroid, new AsteroidData { size = asteroidSize });
-        ecb.SetComponent(newAsteroid, new EnemyData { destroyed = false, score = asteroidSize * spawnRO.AsteroidBaseScore });
+        ecb.SetComponent(newAsteroid, new EnemyData { score = asteroidSize * spawnRO.AsteroidBaseScore });
     }
 
     [BurstCompile]

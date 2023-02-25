@@ -90,18 +90,18 @@ public partial struct PlayerSystem : ISystem
             EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.Temp);
             float bulletMaxSpeed = playerRO.BulletMaxSpeed;
             Vector3 bulletVelocity = playerRO.GetNewBulletVelocity();
-            SpawnBullet(ref ecb, playerRO.BulletPrefab, playerRO.WorldPosition, playerRO.Up, bulletVelocity, 0, bulletMaxSpeed, playerRO.BulletLifeTime);
+            SpawnBullet(ref state, ref ecb, playerRO.WorldPosition, playerRO.Up, bulletVelocity, 0, bulletMaxSpeed, playerRO.BulletLifeTime);
             if (playerRO.IsMultiShootActive(SystemAPI.Time.ElapsedTime))
             {
-                SpawnBullet(ref ecb, playerRO.BulletPrefab, playerRO.WorldPosition, playerRO.Up, bulletVelocity, -playerRO.MultiBulletAngle, bulletMaxSpeed, playerRO.BulletLifeTime);
-                SpawnBullet(ref ecb, playerRO.BulletPrefab, playerRO.WorldPosition, playerRO.Up, bulletVelocity, playerRO.MultiBulletAngle, bulletMaxSpeed, playerRO.BulletLifeTime);
+                SpawnBullet(ref state, ref ecb, playerRO.WorldPosition, playerRO.Up, bulletVelocity, -playerRO.MultiBulletAngle, bulletMaxSpeed, playerRO.BulletLifeTime);
+                SpawnBullet(ref state, ref ecb, playerRO.WorldPosition, playerRO.Up, bulletVelocity, playerRO.MultiBulletAngle, bulletMaxSpeed, playerRO.BulletLifeTime);
             }
             ecb.Playback(state.EntityManager);
         }
     }
 
     [BurstCompile]
-    void SpawnBullet(ref EntityCommandBuffer ecb, Entity prefab, Vector3 playerPos, Vector3 up, Vector3 velocity, float rotation, float maxSpeed, float lifeTime)
+    void SpawnBullet(ref SystemState state, ref EntityCommandBuffer ecb, Vector3 playerPos, Vector3 up, Vector3 velocity, float rotation, float maxSpeed, float lifeTime)
     {
         Quaternion rotationQuat = Quaternion.Euler(0, 0, rotation);
         Vector3 spawnPos = playerPos + rotationQuat * up;
@@ -109,17 +109,18 @@ public partial struct PlayerSystem : ISystem
         {
             velocity = rotationQuat *velocity;
         }
-        Entity newBullet = ecb.Instantiate(prefab);
+        Entity newBullet = ecb.Instantiate(playerRO.BulletPrefab);
         ecb.SetComponent(newBullet, new LocalTransform { Position = spawnPos, Rotation = Quaternion.identity, Scale = 1 });
         ecb.SetComponent(newBullet, new MovementData { acceleration = Vector3.zero, velocity = velocity, angularVelocity = 0, maxSpeed = maxSpeed });
-        ecb.SetComponent(newBullet, new BulletData { lifeTime = lifeTime });
+        ecb.SetComponent(newBullet, new LifeTimeData { expirationTick = SystemAPI.Time.ElapsedTime + lifeTime });
+        ecb.SetComponent(newBullet, new BulletTag { });
     }
 
     [BurstCompile]
     void ResetGame(ref SystemState state)
     {
         DestroyAll<EnemyData>(ref state);
-        DestroyAll<BulletData>(ref state);
+        DestroyAll<BulletTag>(ref state);
         DestroyAll<PowerUpData>(ref state);
 
         PlayerAspect player = SystemAPI.GetAspectRW<PlayerAspect>(SystemAPI.GetSingletonEntity<PlayerDesignData>());
@@ -129,7 +130,6 @@ public partial struct PlayerSystem : ISystem
         Game.instance.ResetScore();
     }
 
-    [BurstCompile]
     void DestroyAll<T>(ref SystemState state) where T : IComponentData
     {
         NativeArray<Entity> entities = state.EntityManager.CreateEntityQuery(typeof(T)).ToEntityArray(Allocator.Temp);

@@ -28,29 +28,32 @@ public partial struct CollisionSystem : ISystem
         Entity playerEntity = SystemAPI.GetSingletonEntity<PlayerDesignData>();
         PlayerAspect playerRW = SystemAPI.GetAspectRW<PlayerAspect>(playerEntity);
 
-        NativeArray<Entity> bullets = state.EntityManager.CreateEntityQuery(typeof(BulletData)).ToEntityArray(Allocator.Temp);
+        NativeArray<Entity> bullets = state.EntityManager.CreateEntityQuery(typeof(BulletTag)).ToEntityArray(Allocator.Temp);
         NativeArray<Entity> PowerUps = state.EntityManager.CreateEntityQuery(typeof(PowerUpData)).ToEntityArray(Allocator.Temp);
         NativeArray<Entity> enemies = state.EntityManager.CreateEntityQuery(typeof(EnemyData)).ToEntityArray(Allocator.Temp);
+        EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.Temp);
 
         foreach (Entity enemy in enemies)
         {
             EnemyData enemyData = state.EntityManager.GetComponentData<EnemyData>(enemy);
-            if (!enemyData.destroyed)
+            foreach (Entity bullet in bullets)
             {
-                foreach (Entity bullet in bullets)
+                if (SphereSphereCollision(bullet, enemy, ref state))
                 {
-                    BulletData bulletData = state.EntityManager.GetComponentData<BulletData>(bullet);
-                    if (bulletData.lifeTime > 0)
+                    ecb.DestroyEntity(bullet);
+
+                    switch (enemyData.enemyType)
                     {
-                        if (SphereSphereCollision(bullet, enemy, ref state))
-                        {
-                            bulletData.lifeTime = 0;
-                            state.EntityManager.SetComponentData(bullet, bulletData);
-                            enemyData.destroyed = true;
-                            state.EntityManager.SetComponentData(enemy, enemyData);
-                            Game.instance.AddToScore(enemyData.score);
-                        }
+                        case EnemyType.Asteroid:
+                            ecb.AddComponent(enemy, typeof(HitAsteroidTag));
+                            ecb.RemoveComponent(enemy, typeof(EnemyData));
+                            break;
+
+                        case EnemyType.UFO:
+                            ecb.DestroyEntity(enemy);
+                            break;
                     }
+                    Game.instance.AddToScore(enemyData.score);
                 }
             }
 
@@ -66,16 +69,12 @@ public partial struct CollisionSystem : ISystem
         foreach (Entity powerUp in PowerUps)
         {
             PowerUpData powerUpData = state.EntityManager.GetComponentData<PowerUpData>(powerUp);
-            if (!powerUpData.picked)
+            if (!playerRW.IsDead)
             {
-                if (!playerRW.IsDead)
+                if (SphereSphereCollision(playerEntity, powerUp, ref state))
                 {
-                    if (SphereSphereCollision(playerEntity, powerUp, ref state))
-                    {
-                        powerUpData.picked = true;
-                        playerRW.PickupPowerUp(powerUpData.type, SystemAPI.Time.ElapsedTime, powerUpData.duration);
-                        state.EntityManager.SetComponentData(powerUp, powerUpData);
-                    }
+                    playerRW.PickupPowerUp(powerUpData.type, SystemAPI.Time.ElapsedTime, powerUpData.duration);
+                    ecb.DestroyEntity(powerUp);
                 }
             }
         }
@@ -83,6 +82,8 @@ public partial struct CollisionSystem : ISystem
         bullets.Dispose();
         enemies.Dispose();
         PowerUps.Dispose();
+
+        ecb.Playback(state.EntityManager);
     }
 
     [BurstCompile]

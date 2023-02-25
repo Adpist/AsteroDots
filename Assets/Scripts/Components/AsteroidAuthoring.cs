@@ -22,3 +22,5 @@ struct AsteroidData : IComponentData
 {
     public int size;
 }
+
+struct HitAsteroidTag : IComponentData { }

@@ -23,8 +23,7 @@ public class PowerUpAuthoring : MonoBehaviour
             var data = new PowerUpData
             {
                 duration = authoring.duration,
-                type = authoring.type,
-                picked = false
+                type = authoring.type
             };
             AddComponent(data);
         }
@@ -34,6 +33,5 @@ public class PowerUpAuthoring : MonoBehaviour
 struct PowerUpData : IComponentData
 {
     public float duration;
-    public bool picked;
     public PowerUpType type;
 }
