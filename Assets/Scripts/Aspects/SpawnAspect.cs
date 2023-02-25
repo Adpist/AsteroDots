@@ -9,8 +9,6 @@ public readonly partial struct SpawnAspect : IAspect
 {
     public readonly Entity entity;
 
-    private readonly TransformAspect transform;
-
     private readonly RefRO<SpawnDesignData> designData;
     private readonly RefRO<SpawnAsteroidDesignData> asteroidDesignData;
     private readonly RefRO<SpawnUFODesignData> ufoDesignData;

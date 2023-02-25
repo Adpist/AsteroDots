@@ -14,7 +14,7 @@ public partial struct UFOSystem : ISystem
     public void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<UFOData>();
-        state.RequireForUpdate<PlayerData>();
+        state.RequireForUpdate<PlayerDesignData>();
     }
 
     [BurstCompile]
@@ -25,15 +25,14 @@ public partial struct UFOSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        Entity playerEntity = SystemAPI.GetSingletonEntity<PlayerData>();
-        LocalTransform playerTransform = state.EntityManager.GetComponentData<LocalTransform>(playerEntity);
-
+        PlayerAspect player = SystemAPI.GetAspectRO<PlayerAspect>(SystemAPI.GetSingletonEntity<PlayerDesignData>());
+        float3 playerPosition = player.WorldPosition;
         foreach (var (transform, movement, ufoData) in SystemAPI.Query<RefRO<LocalTransform>, RefRW<MovementData>, RefRW<UFOData>>())
         {
             float sqrChaseRadius = ufoData.ValueRO.chaseRadius * ufoData.ValueRO.chaseRadius;
-            if (math.distancesq(transform.ValueRO.Position, playerTransform.Position) <= sqrChaseRadius)
+            if (math.distancesq(transform.ValueRO.Position, playerPosition) <= sqrChaseRadius)
             {
-                Vector3 dir = playerTransform.Position - transform.ValueRO.Position;
+                Vector3 dir = playerPosition - transform.ValueRO.Position;
                 dir.Normalize();
                 movement.ValueRW.acceleration = dir * ufoData.ValueRO.chaseAcceleration;
                 movement.ValueRW.maxSpeed = ufoData.ValueRO.chaseMaxSpeed;

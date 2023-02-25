@@ -13,7 +13,8 @@ public partial struct CollisionSystem : ISystem
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
-        state.RequireForUpdate<PlayerData>();
+        state.RequireForUpdate<PlayerDesignData>();
+        state.RequireForUpdate<PlayerRuntimeData>();
     }
 
     [BurstCompile]
@@ -24,8 +25,9 @@ public partial struct CollisionSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        Entity player = SystemAPI.GetSingletonEntity<PlayerData>();
-        PlayerData playerData = state.EntityManager.GetComponentData<PlayerData>(player);
+        Entity playerEntity = SystemAPI.GetSingletonEntity<PlayerDesignData>();
+        PlayerAspect playerRW = SystemAPI.GetAspectRW<PlayerAspect>(playerEntity);
+
         NativeArray<Entity> bullets = state.EntityManager.CreateEntityQuery(typeof(BulletData)).ToEntityArray(Allocator.Temp);
         NativeArray<Entity> PowerUps = state.EntityManager.CreateEntityQuery(typeof(PowerUpData)).ToEntityArray(Allocator.Temp);
         NativeArray<Entity> enemies = state.EntityManager.CreateEntityQuery(typeof(EnemyData)).ToEntityArray(Allocator.Temp);
@@ -52,12 +54,11 @@ public partial struct CollisionSystem : ISystem
                 }
             }
 
-            if (!playerData.dead && SystemAPI.Time.ElapsedTime >= playerData.invulnerabilityExpireTick)
+            if (!playerRW.IsInvulnerable(SystemAPI.Time.ElapsedTime))
             {
-                if (SphereSphereCollision(player, enemy, ref state))
+                if (SphereSphereCollision(playerEntity, enemy, ref state))
                 {
-                    playerData.dead = true;
-                    state.EntityManager.SetComponentData(player, playerData);
+                    playerRW.SetDead(true);
                 }
             }
         }
@@ -67,23 +68,13 @@ public partial struct CollisionSystem : ISystem
             PowerUpData powerUpData = state.EntityManager.GetComponentData<PowerUpData>(powerUp);
             if (!powerUpData.picked)
             {
-                if (!playerData.dead)
+                if (!playerRW.IsDead)
                 {
-                    if (SphereSphereCollision(player, powerUp, ref state))
+                    if (SphereSphereCollision(playerEntity, powerUp, ref state))
                     {
                         powerUpData.picked = true;
-                        switch(powerUpData.type)
-                        {
-                            case PowerUpType.Shield:
-                                playerData.invulnerabilityExpireTick = SystemAPI.Time.ElapsedTime + (double)powerUpData.duration;
-                                break;
-
-                            case PowerUpType.MultiShoot:
-                                playerData.multiShootExpireTick = SystemAPI.Time.ElapsedTime + (double)powerUpData.duration;
-                                break;
-                        }
+                        playerRW.PickupPowerUp(powerUpData.type, SystemAPI.Time.ElapsedTime, powerUpData.duration);
                         state.EntityManager.SetComponentData(powerUp, powerUpData);
-                        state.EntityManager.SetComponentData(player, playerData);
                     }
                 }
             }

@@ -42,11 +42,11 @@ public partial struct SpawnSystem : ISystem
         }
         else
         {
-            Entity playerEntity = SystemAPI.GetSingletonEntity<PlayerData>();
-            LocalTransform playerTransform = state.EntityManager.GetComponentData<LocalTransform>(playerEntity);
+            PlayerAspect player = SystemAPI.GetAspectRO<PlayerAspect>(SystemAPI.GetSingletonEntity<PlayerDesignData>());
+            float3 playerPosition = player.WorldPosition;
 
-            UpdateAsteroidSpawn(ref state, ref ecb, playerTransform.Position);
-            UpdateUFOSpawn(ref state, ref ecb, playerTransform.Position);
+            UpdateAsteroidSpawn(ref state, ref ecb, playerPosition);
+            UpdateUFOSpawn(ref state, ref ecb, playerPosition);
             UpdatePowerUpSpawn(ref state, ref ecb);
 
             NativeArray<Entity> asteroids = state.EntityManager.CreateEntityQuery(typeof(AsteroidData)).ToEntityArray(Allocator.Temp);

@@ -6,14 +6,19 @@ using Unity.Transforms;
 using Unity.Collections;
 using UnityEngine;
 
-[RequireMatchingQueriesForUpdate]
 [BurstCompile]
 public partial struct PlayerSystem : ISystem
 {
+    PlayerAspect playerRW;
+    PlayerAspect playerRO;
+    bool needResetGame;
+
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
-        state.RequireForUpdate<PlayerData>();
+        state.RequireForUpdate<PlayerDesignData>();
+        state.RequireForUpdate<PlayerRuntimeData>();
+        needResetGame = false;
     }
 
     [BurstCompile]
@@ -24,12 +29,20 @@ public partial struct PlayerSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        Entity playerEntity = SystemAPI.GetSingletonEntity<PlayerData>();
-        PlayerData playerData = state.EntityManager.GetComponentData<PlayerData>(playerEntity);
+        Entity playerEntity = SystemAPI.GetSingletonEntity<PlayerDesignData>();
+        playerRW = SystemAPI.GetAspectRW<PlayerAspect>(playerEntity);
+        playerRO = SystemAPI.GetAspectRO<PlayerAspect>(playerEntity);
 
-        if (playerData.dead)
+        //Couldn't set dead value to false through player aspect inside ResetGame
+        //So reset the game in the update after the death detection
+        if (needResetGame)
         {
-            RestartGame(ref state);
+            ResetGame(ref state);
+            needResetGame = false;
+        }
+        else if (playerRO.IsDead)
+        {
+            needResetGame = true;
         }
         else
         {
@@ -45,31 +58,26 @@ public partial struct PlayerSystem : ISystem
         bool right = Input.GetKey(KeyCode.RightArrow);
         bool accelerating = Input.GetKey(KeyCode.UpArrow);
 
-        PlayerData playerData = state.EntityManager.GetComponentData<PlayerData>(player);
-        LocalTransform transform = state.EntityManager.GetComponentData<LocalTransform>(player);
-        MovementData movement = state.EntityManager.GetComponentData<MovementData>(player);
-
         float angularSpeed = 0;
         Vector3 acceleration = Vector3.zero;
         if (left)
         {
-            angularSpeed += playerData.rotationSpeed;
+            angularSpeed += playerRO.RotationSpeed;
         }
 
         if (right)
         {
-            angularSpeed -= playerData.rotationSpeed;
+            angularSpeed -= playerRO.RotationSpeed;
         }
 
         if (accelerating)
         {
-            acceleration = transform.Up();
-            acceleration *= playerData.accelerationSpeed;
+            acceleration = playerRO.Up;
+            acceleration *= playerRO.AccelerationSpeed;
         }
 
-        movement.angularVelocity = angularSpeed;
-        movement.acceleration = acceleration;
-        state.EntityManager.SetComponentData(player, movement);
+        playerRW.SetAcceleration(acceleration);
+        playerRW.SetAngularVelocity(angularSpeed);
     }
 
     [BurstCompile]
@@ -77,25 +85,19 @@ public partial struct PlayerSystem : ISystem
     {
         bool shooting = Input.GetKeyDown(KeyCode.Space);
 
-        PlayerData playerData = state.EntityManager.GetComponentData<PlayerData>(player);
-        LocalTransform transform = state.EntityManager.GetComponentData<LocalTransform>(player);
-        MovementData movement = state.EntityManager.GetComponentData<MovementData>(player);
-
-        EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.Temp);
-
         if (shooting)
         {
-            float bulletMaxSpeed = movement.maxSpeed + playerData.bulletSpeed;
-            Vector3 bulletVelocity = movement.velocity + transform.Up() * playerData.bulletSpeed;
-            SpawnBullet(ref ecb, playerData.bulletPrefab, transform.Position, transform.Up(), bulletVelocity, 0, bulletMaxSpeed, playerData.bulletLifeTime);
-            if (SystemAPI.Time.ElapsedTime < playerData.multiShootExpireTick)
+            EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.Temp);
+            float bulletMaxSpeed = playerRO.BulletMaxSpeed;
+            Vector3 bulletVelocity = playerRO.GetNewBulletVelocity();
+            SpawnBullet(ref ecb, playerRO.BulletPrefab, playerRO.WorldPosition, playerRO.Up, bulletVelocity, 0, bulletMaxSpeed, playerRO.BulletLifeTime);
+            if (playerRO.IsMultiShootActive(SystemAPI.Time.ElapsedTime))
             {
-                SpawnBullet(ref ecb, playerData.bulletPrefab, transform.Position, transform.Up(), bulletVelocity, -playerData.multiBulletAngle, bulletMaxSpeed, playerData.bulletLifeTime);
-                SpawnBullet(ref ecb, playerData.bulletPrefab, transform.Position, transform.Up(), bulletVelocity, playerData.multiBulletAngle, bulletMaxSpeed, playerData.bulletLifeTime);
+                SpawnBullet(ref ecb, playerRO.BulletPrefab, playerRO.WorldPosition, playerRO.Up, bulletVelocity, -playerRO.MultiBulletAngle, bulletMaxSpeed, playerRO.BulletLifeTime);
+                SpawnBullet(ref ecb, playerRO.BulletPrefab, playerRO.WorldPosition, playerRO.Up, bulletVelocity, playerRO.MultiBulletAngle, bulletMaxSpeed, playerRO.BulletLifeTime);
             }
+            ecb.Playback(state.EntityManager);
         }
-
-        ecb.Playback(state.EntityManager);
     }
 
     [BurstCompile]
@@ -114,13 +116,14 @@ public partial struct PlayerSystem : ISystem
     }
 
     [BurstCompile]
-    void RestartGame(ref SystemState state)
+    void ResetGame(ref SystemState state)
     {
         DestroyAll<EnemyData>(ref state);
         DestroyAll<BulletData>(ref state);
         DestroyAll<PowerUpData>(ref state);
-        
-        ResetPlayer(ref state);
+
+        PlayerAspect player = SystemAPI.GetAspectRW<PlayerAspect>(SystemAPI.GetSingletonEntity<PlayerDesignData>());
+        player.ResetRuntimeData();
         SpawnAspect spawn = SystemAPI.GetAspectRW<SpawnAspect>(SystemAPI.GetSingletonEntity<SpawnDesignData>());
         spawn.ResetRuntimeData();
         Game.instance.ResetScore();
@@ -132,23 +135,5 @@ public partial struct PlayerSystem : ISystem
         NativeArray<Entity> entities = state.EntityManager.CreateEntityQuery(typeof(T)).ToEntityArray(Allocator.Temp);
         state.EntityManager.DestroyEntity(entities);
         entities.Dispose();
-    }
-
-    [BurstCompile]
-    void ResetPlayer(ref SystemState state)
-    {
-        Entity playerEntity = SystemAPI.GetSingletonEntity<PlayerData>();
-        PlayerData playerData = state.EntityManager.GetComponentData<PlayerData>(playerEntity);
-        LocalTransform transform = state.EntityManager.GetComponentData<LocalTransform>(playerEntity);
-        MovementData movement = state.EntityManager.GetComponentData<MovementData>(playerEntity);
-        playerData.dead = false;
-        transform.Position = Vector3.zero;
-        transform.Rotation = Quaternion.identity;
-        movement.acceleration = Vector3.zero;
-        movement.velocity = Vector3.zero;
-        movement.angularVelocity = 0;
-        state.EntityManager.SetComponentData<PlayerData>(playerEntity, playerData);
-        state.EntityManager.SetComponentData<LocalTransform>(playerEntity, transform);
-        state.EntityManager.SetComponentData<MovementData>(playerEntity, movement);
     }
 }

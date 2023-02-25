@@ -16,24 +16,28 @@ public class PlayerAuthoring : MonoBehaviour
     {
         public override void Bake(PlayerAuthoring authoring)
         {
-            var data = new PlayerData
+            PlayerDesignData designData = new PlayerDesignData
             {
                 accelerationSpeed = authoring.accelerationSpeed,
                 rotationSpeed = authoring.rotationSpeed,
                 bulletSpeed = authoring.bulletSpeed,
                 bulletLifeTime = authoring.bulletLifeTime,
                 multiBulletAngle = authoring.multiBulletAngle,
-                bulletPrefab = GetEntity(authoring.bulletPrefab),
+                bulletPrefab = GetEntity(authoring.bulletPrefab)
+            };
+            PlayerRuntimeData runtimeData = new PlayerRuntimeData
+            {
                 invulnerabilityExpireTick = 0,
                 multiShootExpireTick = 0,
                 dead = false
             };
-            AddComponent(data);
+            AddComponent(designData);
+            AddComponent(runtimeData);
         }
     }
 }
 
-struct PlayerData : IComponentData
+struct PlayerDesignData : IComponentData
 {
     public float accelerationSpeed;
     public float rotationSpeed;
@@ -41,6 +45,10 @@ struct PlayerData : IComponentData
     public float bulletLifeTime;
     public float multiBulletAngle;
     public Entity bulletPrefab;
+}
+
+struct PlayerRuntimeData : IComponentData
+{
     public double invulnerabilityExpireTick;
     public double multiShootExpireTick;
     public bool dead;
