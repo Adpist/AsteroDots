@@ -124,33 +124,6 @@ struct SpawnPowerUpDesignData : IComponentData
 struct SpawnDesignData : IComponentData
 {
     public float sqrSafetyRadius;
-
-    /*public float minAsteroidSpawnDelay;
-    public float maxAsteroidSpawnDelay;
-    public double nextAsteroidSpawnTick;
-    public float minAsteroidSpeed;
-    public float maxAsteroidSpeed;
-    public float minAsteroidSplitSpeedMultiplier;
-    public float maxAsteroidSplitSpeedMultiplier;
-    public int asteroidSpawnSize;
-    public int minAsteroidSize;
-    public int initialAsteroidsCount;
-    public int asteroidBaseScore;
-
-    public float minUFOSpawnDelay;
-    public float maxUFOSpawnDelay;
-    public double nextUFOSpawnTick;
-
-    public float minPowerUpDelay;
-    public float maxPowerUpDelay;
-    public double nextPowerUpSpawnTick;
-
-    public Entity asteroidPrefab;
-    public Entity ufoPrefab;
-    public Entity multiShootPrefab;
-    public Entity shieldPrefab;
-
-    public bool initialSpawnProcessed;*/
 }
 
 struct SpawnRuntimeData : IComponentData
